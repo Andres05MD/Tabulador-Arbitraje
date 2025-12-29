@@ -20,7 +20,10 @@ import GamesFilters, { type ViewMode, type GameStatus } from '@/src/components/G
 import TeamsView from '@/src/components/TeamsView';
 import type { GameFormData } from '@/src/lib/validations';
 
+import { useAuth } from '@/src/components/AuthProvider';
+
 export default function JuegosPage() {
+    const { user } = useAuth();
     const [games, setGames] = useState<Game[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
@@ -35,6 +38,8 @@ export default function JuegosPage() {
     const [selectedStatus, setSelectedStatus] = useState<GameStatus>('all');
 
     useEffect(() => {
+        if (!user) return;
+
         let gamesUnsubscribe: (() => void) | null = null;
         let categoriesUnsubscribe: (() => void) | null = null;
         let loadingCount = 2;
@@ -47,6 +52,7 @@ export default function JuegosPage() {
         };
 
         categoriesUnsubscribe = subscribeToCategories(
+            user.uid,
             (updatedCategories) => {
                 setCategories(updatedCategories);
                 checkLoading();
@@ -63,6 +69,7 @@ export default function JuegosPage() {
         );
 
         gamesUnsubscribe = subscribeToGames(
+            user.uid,
             (updatedGames) => {
                 setGames(updatedGames);
                 checkLoading();
@@ -82,7 +89,7 @@ export default function JuegosPage() {
             if (gamesUnsubscribe) gamesUnsubscribe();
             if (categoriesUnsubscribe) categoriesUnsubscribe();
         };
-    }, []);
+    }, [user]);
 
     // Aplicar filtros
     const filteredGames = useMemo(() => {
@@ -136,6 +143,8 @@ export default function JuegosPage() {
     };
 
     const handleSubmit = async (data: GameFormData) => {
+        if (!user) return;
+
         try {
             const category = categories.find((cat) => cat.id === data.categoryId);
             if (!category) {
@@ -152,7 +161,10 @@ export default function JuegosPage() {
                     confirmButtonColor: '#0ea5e9',
                 });
             } else {
-                await createGame(data, category);
+                await createGame({
+                    ...data,
+                    ownerId: user.uid,
+                }, category);
                 await Swal.fire({
                     title: '¡Registrado!',
                     text: 'El juego se ha registrado correctamente',
@@ -399,8 +411,8 @@ export default function JuegosPage() {
                                                     {gameStatus !== 'pending' && (
                                                         <span
                                                             className={`px-2 py-0.5 text-xs font-medium rounded ${gameStatus === 'completed'
-                                                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                                                    : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                                                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                                                                 }`}
                                                         >
                                                             {gameStatus === 'completed' ? 'Completado' : 'Cancelado'}
@@ -423,10 +435,10 @@ export default function JuegosPage() {
                                                     <div className="relative group">
                                                         <button
                                                             className={`p-2 rounded-lg transition-colors ${gameStatus === 'completed'
-                                                                    ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                                                                    : gameStatus === 'cancelled'
-                                                                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                                                                        : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400'
+                                                                ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                                                                : gameStatus === 'cancelled'
+                                                                    ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                                                                    : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400'
                                                                 }`}
                                                             title="Cambiar estado"
                                                         >

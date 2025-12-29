@@ -6,7 +6,6 @@ import {
     doc,
     getDocs,
     query,
-    orderBy,
     where,
     Timestamp,
     onSnapshot,
@@ -16,12 +15,21 @@ import type { Game, Category } from '@/src/types';
 
 const COLLECTION_NAME = 'games';
 
-// Obtener todos los juegos (snapshot en tiempo real)
+// Obtener todos los juegos de un usuario (snapshot en tiempo real)
 export function subscribeToGames(
+    ownerId: string,
     callback: (games: Game[]) => void,
     onError?: (error: any) => void
 ) {
-    const q = query(collection(db, COLLECTION_NAME), orderBy('date', 'desc'));
+    if (!ownerId) {
+        callback([]);
+        return () => { };
+    }
+
+    const q = query(
+        collection(db, COLLECTION_NAME),
+        where('ownerId', '==', ownerId)
+    );
 
     return onSnapshot(
         q,
@@ -30,6 +38,10 @@ export function subscribeToGames(
                 id: doc.id,
                 ...doc.data(),
             } as Game));
+
+            // Ordenar por fecha descendente en cliente
+            games.sort((a, b) => b.date.toMillis() - a.date.toMillis());
+
             callback(games);
         },
         (error) => {
@@ -41,21 +53,27 @@ export function subscribeToGames(
     );
 }
 
-// Obtener juegos por rango de fechas
+// Obtener juegos por rango de fechas y usuario
 export function subscribeToGamesByDateRange(
+    ownerId: string,
     startDate: Date,
     endDate: Date,
     callback: (games: Game[]) => void,
     onError?: (error: any) => void
 ) {
+    if (!ownerId) {
+        callback([]);
+        return () => { };
+    }
+
     const startTimestamp = Timestamp.fromDate(startDate);
     const endTimestamp = Timestamp.fromDate(endDate);
 
     const q = query(
         collection(db, COLLECTION_NAME),
+        where('ownerId', '==', ownerId),
         where('date', '>=', startTimestamp),
-        where('date', '<=', endTimestamp),
-        orderBy('date', 'desc')
+        where('date', '<=', endTimestamp)
     );
 
     return onSnapshot(
@@ -65,6 +83,10 @@ export function subscribeToGamesByDateRange(
                 id: doc.id,
                 ...doc.data(),
             } as Game));
+
+            // Ordenar por fecha descendente en cliente
+            games.sort((a, b) => b.date.toMillis() - a.date.toMillis());
+
             callback(games);
         },
         (error) => {
@@ -84,6 +106,7 @@ export async function createGame(
         categoryId: string;
         teamA: string;
         teamB: string;
+        ownerId: string;
     },
     category: Category
 ): Promise<string> {
@@ -99,6 +122,7 @@ export async function createGame(
         teamB: data.teamB,
         totalCost,
         status: 'pending',
+        ownerId: data.ownerId,
         createdAt: now,
         updatedAt: now,
     });

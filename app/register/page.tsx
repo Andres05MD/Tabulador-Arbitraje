@@ -35,7 +35,7 @@ export default function RegisterPage() {
                 timer: 2000,
             });
 
-            router.push('/');
+            router.push('/categorias');
         } catch (error: any) {
             console.error('Error registering:', error);
 

@@ -14,7 +14,10 @@ import PriceDisplay from '@/src/components/PriceDisplay';
 import FirebasePermissionsError from '@/src/components/FirebasePermissionsError';
 import type { CategoryFormData } from '@/src/lib/validations';
 
+import { useAuth } from '@/src/components/AuthProvider';
+
 export default function CategoriasPage() {
+    const { user } = useAuth();
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -22,7 +25,10 @@ export default function CategoriasPage() {
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
     useEffect(() => {
+        if (!user) return;
+
         const unsubscribe = subscribeToCategories(
+            user.uid,
             (updatedCategories) => {
                 setCategories(updatedCategories);
                 setLoading(false);
@@ -42,7 +48,7 @@ export default function CategoriasPage() {
         );
 
         return () => unsubscribe();
-    }, []);
+    }, [user]);
 
     const handleCreate = () => {
         setEditingCategory(null);
@@ -55,6 +61,8 @@ export default function CategoriasPage() {
     };
 
     const handleSubmit = async (data: CategoryFormData) => {
+        if (!user) return;
+
         try {
             if (editingCategory) {
                 await updateCategory(editingCategory.id, data);
@@ -66,7 +74,10 @@ export default function CategoriasPage() {
                     confirmButtonColor: '#0ea5e9',
                 });
             } else {
-                await createCategory(data);
+                await createCategory({
+                    ...data,
+                    ownerId: user.uid,
+                });
                 await Swal.fire({
                     title: '¡Creado!',
                     text: 'La categoría se ha creado correctamente',

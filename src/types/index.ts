@@ -4,6 +4,7 @@ export interface Category {
     id: string;
     name: string;
     pricePerTeam: number;
+    ownerId?: string;
     createdAt: Timestamp;
     updatedAt: Timestamp;
 }
@@ -18,6 +19,7 @@ export interface Game {
     teamB: string;
     totalCost: number;
     status?: 'pending' | 'completed' | 'cancelled';
+    ownerId?: string;
     createdAt: Timestamp;
     updatedAt: Timestamp;
 }

@@ -34,7 +34,7 @@ export default function LoginPage() {
                 timer: 2000,
             });
 
-            router.push('/');
+            router.push('/categorias');
         } catch (error: any) {
             console.error('Error logging in:', error);
 

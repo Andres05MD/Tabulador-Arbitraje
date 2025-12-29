@@ -15,7 +15,6 @@ export default function Navigation() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const navItems = [
-        { name: 'Inicio', href: '/' },
         { name: 'Categorías', href: '/categorias' },
         { name: 'Juegos', href: '/juegos' },
     ];
@@ -64,7 +63,7 @@ export default function Navigation() {
             <div className="page-container">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center space-x-2 group">
+                    <Link href="/categorias" className="flex items-center space-x-2 group">
                         <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
                             <svg
                                 className="w-6 h-6 text-white"
@@ -92,8 +91,8 @@ export default function Navigation() {
                                 key={item.href}
                                 href={item.href}
                                 className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${isActive(item.href)
-                                        ? 'bg-primary-500 text-white shadow-lg'
-                                        : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                                    ? 'bg-primary-500 text-white shadow-lg'
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
                                     }`}
                             >
                                 {item.name}
@@ -184,8 +183,8 @@ export default function Navigation() {
                                 href={item.href}
                                 onClick={() => setMobileMenuOpen(false)}
                                 className={`block px-4 py-3 rounded-lg font-medium transition-all duration-300 ${isActive(item.href)
-                                        ? 'bg-primary-500 text-white shadow-lg'
-                                        : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                                    ? 'bg-primary-500 text-white shadow-lg'
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
                                     }`}
                             >
                                 {item.name}

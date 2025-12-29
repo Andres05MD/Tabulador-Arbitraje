@@ -6,7 +6,7 @@ import {
     doc,
     getDocs,
     query,
-    orderBy,
+    where,
     Timestamp,
     onSnapshot,
 } from 'firebase/firestore';
@@ -15,12 +15,21 @@ import type { Category } from '@/src/types';
 
 const COLLECTION_NAME = 'categories';
 
-// Obtener todas las categorías (snapshot en tiempo real)
+// Obtener categorías por ownerId (snapshot en tiempo real)
 export function subscribeToCategories(
+    ownerId: string,
     callback: (categories: Category[]) => void,
     onError?: (error: any) => void
 ) {
-    const q = query(collection(db, COLLECTION_NAME), orderBy('name', 'asc'));
+    if (!ownerId) {
+        callback([]);
+        return () => { };
+    }
+
+    const q = query(
+        collection(db, COLLECTION_NAME),
+        where('ownerId', '==', ownerId)
+    );
 
     return onSnapshot(
         q,
@@ -29,6 +38,10 @@ export function subscribeToCategories(
                 id: doc.id,
                 ...doc.data(),
             } as Category));
+
+            // Ordenar en cliente para evitar requerir índice compuesto
+            categories.sort((a, b) => a.name.localeCompare(b.name));
+
             callback(categories);
         },
         (error) => {
@@ -40,27 +53,36 @@ export function subscribeToCategories(
     );
 }
 
-// Obtener todas las categorías (una sola vez)
-export async function getCategories(): Promise<Category[]> {
-    const q = query(collection(db, COLLECTION_NAME), orderBy('name', 'asc'));
+// Obtener todas las categorías de un usuario (una sola vez)
+export async function getCategories(ownerId: string): Promise<Category[]> {
+    if (!ownerId) return [];
+
+    const q = query(
+        collection(db, COLLECTION_NAME),
+        where('ownerId', '==', ownerId)
+    );
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((doc) => ({
+    const categories = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
     } as Category));
+
+    return categories.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // Crear nueva categoría
 export async function createCategory(data: {
     name: string;
     pricePerTeam: number;
+    ownerId: string;
 }): Promise<string> {
     const now = Timestamp.now();
 
     const docRef = await addDoc(collection(db, COLLECTION_NAME), {
         name: data.name,
         pricePerTeam: data.pricePerTeam,
+        ownerId: data.ownerId,
         createdAt: now,
         updatedAt: now,
     });
@@ -68,7 +90,7 @@ export async function createCategory(data: {
     return docRef.id;
 }
 
-// Actualizar categoría
+// Actualizar categoría (se mantiene igual, ya tienes el ID)
 export async function updateCategory(
     id: string,
     data: {
