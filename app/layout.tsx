@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/src/components/ThemeProvider";
+import { AuthProvider } from "@/src/components/AuthProvider";
 import Navigation from "@/src/components/Navigation";
 
 const inter = Inter({
@@ -24,12 +25,15 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <ThemeProvider>
-          <div className="min-h-screen">
-            <Navigation />
-            <main>{children}</main>
-          </div>
+          <AuthProvider>
+            <div className="min-h-screen">
+              <Navigation />
+              <main>{children}</main>
+            </div>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+

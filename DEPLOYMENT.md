@@ -54,16 +54,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Categorías: Solo lectura pública, escritura con autenticación (opcional)
+    // Categorías: Lectura pública, escritura restringida a usuarios autenticados
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if true; // Cambiar a 'if request.auth != null' si implementas auth
+      allow write: if request.auth != null;
     }
     
-    // Juegos: Solo lectura pública, escritura con autenticación (opcional)
+    // Juegos: Lectura pública, escritura restringida a usuarios autenticados
     match /games/{gameId} {
       allow read: if true;
-      allow write: if true; // Cambiar a 'if request.auth != null' si implementas auth
+      allow write: if request.auth != null;
     }
   }
 }

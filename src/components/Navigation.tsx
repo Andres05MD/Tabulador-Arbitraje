@@ -1,12 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import Swal from 'sweetalert2';
 import ThemeToggle from './ThemeToggle';
 import { useState } from 'react';
+import { useAuth } from './AuthProvider';
+import { logoutUser } from '@/src/lib/authService';
 
 export default function Navigation() {
     const pathname = usePathname();
+    const router = useRouter();
+    const { user, loading } = useAuth();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const navItems = [
@@ -16,6 +21,43 @@ export default function Navigation() {
     ];
 
     const isActive = (href: string) => pathname === href;
+
+    const handleLogout = async () => {
+        const result = await Swal.fire({
+            title: '¿Cerrar Sesión?',
+            text: '¿Estás seguro de que deseas cerrar sesión?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cerrar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#0ea5e9',
+            cancelButtonColor: '#6b7280',
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await logoutUser();
+                await Swal.fire({
+                    title: '¡Hasta pronto!',
+                    text: 'Has cerrado sesión correctamente',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#0ea5e9',
+                    timer: 2000,
+                });
+                router.push('/login');
+            } catch (error) {
+                console.error('Error logging out:', error);
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'Hubo un error al cerrar sesión',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#ef4444',
+                });
+            }
+        }
+    };
 
     return (
         <nav className="sticky top-0 z-50 glass-card mb-8">
@@ -59,8 +101,46 @@ export default function Navigation() {
                         ))}
                     </div>
 
-                    {/* Right Side - Theme Toggle */}
+                    {/* Right Side - User Info & Theme Toggle */}
                     <div className="flex items-center space-x-4">
+                        {!loading && (
+                            <>
+                                {user ? (
+                                    <div className="hidden md:flex items-center space-x-3">
+                                        <div className="text-right">
+                                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                {user.displayName || 'Usuario'}
+                                            </p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {user.email}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                        >
+                                            Cerrar Sesión
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="hidden md:flex items-center space-x-2">
+                                        <Link
+                                            href="/login"
+                                            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
+                                        >
+                                            Iniciar Sesión
+                                        </Link>
+                                        <Link
+                                            href="/register"
+                                            className="px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors shadow-lg"
+                                        >
+                                            Registrarse
+                                        </Link>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
                         <ThemeToggle />
 
                         {/* Mobile Menu Button */}
@@ -111,6 +191,50 @@ export default function Navigation() {
                                 {item.name}
                             </Link>
                         ))}
+
+                        {/* Mobile Auth Buttons */}
+                        {!loading && (
+                            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                                {user ? (
+                                    <>
+                                        <div className="px-4 py-2 text-sm">
+                                            <p className="font-medium text-gray-700 dark:text-gray-300">
+                                                {user.displayName || 'Usuario'}
+                                            </p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {user.email}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setMobileMenuOpen(false);
+                                                handleLogout();
+                                            }}
+                                            className="w-full mt-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                        >
+                                            Cerrar Sesión
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link
+                                            href="/login"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className="block px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
+                                        >
+                                            Iniciar Sesión
+                                        </Link>
+                                        <Link
+                                            href="/register"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className="block px-4 py-3 text-center font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors shadow-lg mt-2"
+                                        >
+                                            Registrarse
+                                        </Link>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

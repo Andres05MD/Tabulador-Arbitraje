@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface DollarRateData {
     fuente: string;
@@ -71,7 +71,28 @@ export function useDollarRate() {
         fetchRate();
     }, []);
 
-    return { rate, loading, error, lastUpdate };
+    // Memoizar funciones para evitar recrearlas en cada render
+    const convertToBs = useCallback((usdAmount: number): number => {
+        if (!rate) return 0;
+        return usdAmount * rate;
+    }, [rate]);
+
+    const formatCurrency = useCallback((amount: number, currency: 'USD' | 'Bs'): string => {
+        if (currency === 'USD') {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+            }).format(amount);
+        }
+        return new Intl.NumberFormat('es-VE', {
+            style: 'currency',
+            currency: 'VES',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(amount);
+    }, []);
+
+    return { rate, loading, error, lastUpdate, convertToBs, formatCurrency };
 }
 
 // Función para obtener la tasa del caché si es válida

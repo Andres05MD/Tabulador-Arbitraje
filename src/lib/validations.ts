@@ -37,3 +37,32 @@ export const gameSchema = z.object({
 });
 
 export type GameFormData = z.infer<typeof gameSchema>;
+
+// Schema para login
+export const loginSchema = z.object({
+    email: z.string().email('Debe ser un correo electrónico válido'),
+    password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+});
+
+export type LoginFormData = z.infer<typeof loginSchema>;
+
+// Schema para registro
+export const registerSchema = z.object({
+    displayName: z
+        .string()
+        .min(3, 'El nombre debe tener al menos 3 caracteres')
+        .max(50, 'El nombre no puede exceder 50 caracteres'),
+    email: z.string().email('Debe ser un correo electrónico válido'),
+    password: z
+        .string()
+        .min(6, 'La contraseña debe tener al menos 6 caracteres')
+        .regex(/[A-Z]/, 'La contraseña debe contener al menos una mayúscula')
+        .regex(/[0-9]/, 'La contraseña debe contener al menos un número'),
+    confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirmPassword'],
+});
+
+export type RegisterFormData = z.infer<typeof registerSchema>;
+

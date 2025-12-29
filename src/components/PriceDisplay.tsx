@@ -1,6 +1,7 @@
 'use client';
 
-import { useDollarRate, convertToBs, formatCurrency } from '@/src/hooks/useDollarRate';
+import { useMemo } from 'react';
+import { useDollarRate } from '@/src/hooks/useDollarRate';
 
 interface PriceDisplayProps {
     usdAmount: number;
@@ -8,29 +9,42 @@ interface PriceDisplayProps {
     className?: string;
 }
 
-export default function PriceDisplay({ usdAmount, showBoth = true, className = '' }: PriceDisplayProps) {
-    const { rate, loading } = useDollarRate();
+export default function PriceDisplay({ usdAmount, showBoth = false, className = '' }: PriceDisplayProps) {
+    const { rate, loading, convertToBs, formatCurrency } = useDollarRate();
+
+    // Memoizar cálculos para evitar recalcular en cada render
+    const formattedUsd = useMemo(() =>
+        formatCurrency(usdAmount, 'USD'),
+        [usdAmount, formatCurrency]
+    );
+
+    const bsAmount = useMemo(() =>
+        convertToBs(usdAmount),
+        [usdAmount, convertToBs]
+    );
+
+    const formattedBs = useMemo(() =>
+        formatCurrency(bsAmount, 'Bs'),
+        [bsAmount, formatCurrency]
+    );
 
     if (loading) {
+        return <span className={`text-sm text-gray-500 dark:text-gray-400 ${className}`}>Cargando...</span>;
+    }
+
+    if (showBoth) {
         return (
-            <div className={`animate-pulse ${className}`}>
-                <div className="h-5 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+            <div className={className}>
+                <div className="font-bold text-gray-800 dark:text-gray-100">{formattedUsd}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">{formattedBs}</div>
             </div>
         );
     }
 
-    const bsAmount = convertToBs(usdAmount, rate);
-
     return (
         <div className={className}>
-            <div className="font-bold text-primary-600 dark:text-primary-400">
-                {formatCurrency(usdAmount, 'USD')}
-            </div>
-            {showBoth && rate && (
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatCurrency(bsAmount, 'Bs')}
-                </div>
-            )}
+            <div className="font-bold text-gray-800 dark:text-gray-100">{formattedUsd}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{formattedBs}</div>
         </div>
     );
 }
