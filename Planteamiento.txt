@@ -2,257 +2,154 @@
 TABULADOR DE ARBITRAJE - VOLEYBOL
 ================================================================================
 
+ESTADO ACTUAL: PROYECTO AVANZADO (Fase de Pulido y Expansión)
+Última actualización: 2025-12-29
+
 OBJETIVO DEL PROYECTO:
-Desarrollar una aplicación web para gestionar y calcular automáticamente el 
-tabulador de arbitraje para juegos de voleybol. El sistema permitirá definir 
-precios por categoría y registrar juegos del día para obtener cálculos 
-automáticos de los pagos de arbitraje.
+Aplicación web moderna ("Premium Dark Mode") para gestionar, calcular y controlar 
+AUTOMÁTICAMENTE el tabulador de arbitraje. Incluye gestión de pagos, referncias, 
+control de usuarios y una experiencia de usuario (UX) de alto nivel con animaciones.
 
 ================================================================================
-FUNCIONALIDADES POR MÓDULO
+FUNCIONALIDADES IMPLEMENTADAS Y ACTIVAS
 ================================================================================
 
-1. MÓDULO DE CATEGORÍAS
-   Propósito: Gestionar las categorías y sus tarifas de arbitraje
-   
-   Funcionalidades:
-   - Crear nuevas categorías
-   - Editar categorías existentes (nombre y precio)
-   - Eliminar categorías (con confirmación)
-   - Visualizar listado completo de categorías con sus precios
-   - Validar que no existan categorías duplicadas
-   
-   Datos a almacenar por categoría:
-   - ID único
-   - Nombre de categoría (ej: U9, U11, U13, etc.)
-   - Precio por equipo (en USD)
-   - Fecha de creación
-   - Fecha de última modificación
+1. AUTENTICACIÓN Y SEGURIDAD (¡NUEVO!)
+   - Login seguro con correo y contraseña (Firebase Auth).
+   - Registro de nuevos usuarios.
+   - Protección de rutas (Middleware / AuthGuard).
+   - Persistencia de sesión.
 
-2. MÓDULO DE JUEGOS
-   Propósito: Registrar juegos y calcular automáticamente el tabulador
-   
-   Funcionalidades:
-   - Registrar nuevo juego del día
-   - Seleccionar categoría del juego
-   - Ingresar nombres de equipos (Equipo A vs Equipo B)
-   - Calcular automáticamente el costo total (precio categoría × 2 equipos) e individuales
-   - Editar juegos registrados
-   - Eliminar juegos (con confirmación)
-   - Filtrar juegos por fecha
-   
-   Datos a almacenar por juego:
-   - ID único
-   - Fecha del juego
-   - Hora del juego (opcional)
-   - Categoría (referencia a categorías)
-   - Nombre Equipo A
-   - Nombre Equipo B
-   - Costo total calculado
-   - Estado (pendiente/completado/cancelado - opcional)
+2. MÓDULO DE JUEGOS (Refactorizado)
+   - Separación de responsabilidades:
+     a) Cargar Juego (`/juegos/cargar`): Formulario dedicado con animaciones.
+     b) Lista de Juegos (`/juegos`): Visualización con filtros y acciones.
+   - Selectores Premium: 
+     - Selector de Categoría personalizado.
+     - Selector de Estatus personalizado.
+     - Selector de Hora estilo "rueda" (iOS/Android) con accesos rápidos.
+   - Animaciones fluidas (`framer-motion`) en listas y formularios.
 
-3. VISTAS DE VISUALIZACIÓN
-   
-   a) Vista por Equipos:
-      - Mostrar listado de todos los equipos que jugaron
-      - Ver cuántos juegos tuvo cada equipo
-      - Calcular el costo de arbitraje por equipo
-      - Filtrar por fecha/categoría
-   
-   b) Vista Calendario (Juegos del Día):
-      - Visualizar formato: "Equipo A vs Equipo B"
-      - Mostrar categoría y precio calculado
-      - Resumen del día con total de juegos
-      - Sumatoria total del tabulador del día
-      - Organizar por orden cronológico (si hay hora)
+3. GESTIÓN DE PAGOS Y REFERENCIAS (¡NUEVO!)
+   - Control de pago individual por equipo (Check visual).
+   - Registro de Referencia de Pago (opcional al marcar como pagado).
+   - Automatización de Estatus: El juego pasa a "Completado" automáticamente 
+     si ambos equipos pagan.
+   - Feedback visual inmediato (Toasts y SweetAlert2).
 
-4. DASHBOARD PRINCIPAL (Opcional - Fase 2)
-   - Total de juegos registrados
-   - Total de categorías activas
-   - Estadísticas rápidas (juegos del día, semana, mes)
-   - Últimos juegos registrados
+4. MÓDULO DE CATEGORÍAS
+   - CRUD completo de categorías.
+   - Definición de precios por equipo.
+
+5. INTERFAZ "PREMIUM DARK"
+   - Diseño glassmorphism consistente en toda la app.
+   - Modo oscuro permanente (eliminado el theme toggle por consistencia).
+   - Componentes personalizados (Botones, Inputs, Cards, Badges).
+   - Indicador de Tasa BCV en Sidebar.
 
 ================================================================================
-ESTRUCTURA DE DATOS (FIREBASE FIRESTORE)
+ESTRUCTURA DE DATOS (ACTUALIZADA)
 ================================================================================
-
-Colección: "categories"
-{
-  id: string (auto-generado),
-  name: string,
-  pricePerTeam: number,
-  createdAt: timestamp,
-  updatedAt: timestamp
-}
 
 Colección: "games"
 {
-  id: string (auto-generado),
+  id: string,
   date: timestamp,
-  time: string (opcional, ej: "14:30"),
-  categoryId: string (referencia a categories),
-  categoryName: string (desnormalizado para consultas rápidas),
+  time: string ("HH:mm"),
+  categoryId: string,
   teamA: string,
   teamB: string,
-  totalCost: number (calculado: pricePerTeam × 2),
-  status: string (opcional: "pending" | "completed" | "cancelled"),
+  totalCost: number,
+  status: string ("pending" | "completed" | "cancelled"),
+  
+  // Control de Pagos (¡NUEVO!)
+  isPaidTeamA: boolean (default: false),
+  isPaidTeamB: boolean (default: false),
+  paymentRefTeamA: string (opcional),
+  paymentRefTeamB: string (opcional),
+  
   createdAt: timestamp,
-  updatedAt: timestamp
+  userId: string (owner)
+}
+
+Colección: "categories"
+{
+  id: string,
+  name: string,
+  pricePerTeam: number,
+  userId: string (owner),
+  createdAt: timestamp
 }
 
 ================================================================================
-CATEGORÍAS Y PRECIOS INICIALES
+STACK TECNOLÓGICO (ACTUALIZADO)
 ================================================================================
 
-U9  - $5.00 por equipo  → $10.00 por juego
-U11 - $5.00 por equipo  → $10.00 por juego
-U13 - $7.50 por equipo  → $15.00 por juego
-U15 - $7.50 por equipo  → $15.00 por juego
-U17 - $10.00 por equipo → $20.00 por juego
-U19 - $10.00 por equipo → $20.00 por juego
-U21 - $12.50 por equipo → $25.00 por juego
-
-================================================================================
-FLUJO DE USUARIO
-================================================================================
-
-1. CONFIGURACIÓN INICIAL:
-   Usuario → Sección Categorías → Carga las 7 categorías (U9-U21) con precios
-
-2. REGISTRO DIARIO:
-   Usuario → Sección Juegos → Nuevo Juego
-   - Selecciona fecha (default: hoy)
-   - Selecciona categoría del dropdown
-   - Ingresa nombre Equipo A
-   - Ingresa nombre Equipo B
-   - Sistema calcula automáticamente el costo total
-   - Usuario guarda el juego
-
-3. VISUALIZACIÓN:
-   Usuario → Sección Juegos
-   - Opción 1: Ver vista calendario (todos los juegos del día seleccionado)
-   - Opción 2: Ver vista por equipos (resumen de juegos por equipo)
-   - Puede filtrar por fecha/rango de fechas
-   - Ve el total del tabulador calculado
-
-================================================================================
-STACK TECNOLÓGICO
-================================================================================
-
-Frontend:
+Core:
 - Next.js 14+ (App Router)
 - React 18+
 - TypeScript
-- Tailwind CSS (diseño responsive y premium)
+- Firebase (Auth & Firestore)
 
-Backend/Database:
-- Firebase Firestore (base de datos)
-- Firebase Authentication (opcional para futuras mejoras)
+UI & UX:
+- Tailwind CSS (Estilos base)
+- Framer Motion (Animaciones avanzadas: enter/exit, listas)
+- Headless UI (Componentes accesibles: Listbox, Popover, Transition)
+- Heroicons (Iconografía)
+- SweetAlert2 (Modales y Alertas)
+- React Datepicker (Calendario)
 
-Librerías Adicionales:
-- SweetAlert2 (alertas y confirmaciones)
-- date-fns o dayjs (manejo de fechas)
-- react-hook-form (formularios)
-- zod (validación de datos)
-
-================================================================================
-REQUISITOS DE DISEÑO
-================================================================================
-
-✓ Idioma: español (todas las interfaces y mensajes)
-✓ Responsive: compatible con dispositivos móviles y tablets
-✓ Tema: modo claro y oscuro con switch de alternancia
-✓ Diseño: moderno, premium, con efectos glassmorphism
-✓ UX: intuitivo, con feedback visual inmediato
-✓ Accesibilidad: labels claros, navegación por teclado
+Utilidades:
+- clsx & tailwind-merge (Gestión de clases dinámicas)
+- react-hook-form + zod (Manejo robusto de formularios)
+- date-fns (Manejo de fechas)
 
 ================================================================================
-FASES DE DESARROLLO SUGERIDAS
+AVANCE DEL PROYECTO (CHECKLIST)
 ================================================================================
 
-FASE 1 - CONFIGURACIÓN Y BASE (MVP):
-[ ] Configurar proyecto Next.js con TypeScript
-[ ] Configurar Firebase y Firestore
-[ ] Configurar Tailwind CSS con tema personalizado
-[ ] Implementar sistema de tema claro/oscuro
-[ ] Crear layout principal y navegación
+FASE 1 - BASE Y AUTH [COMPLETADO]
+[x] Configuración Next.js + TS
+[x] Firebase Auth (Login/Register)
+[x] Layout "Premium Dark" con Sidebar
+[x] Estilos globales y variables CSS
 
-FASE 2 - MÓDULO DE CATEGORÍAS:
-[ ] Crear página de Categorías
-[ ] Implementar CRUD completo de categorías
-[ ] Diseñar formulario de categoría
-[ ] Implementar validaciones
-[ ] Agregar confirmaciones con SweetAlert2
+FASE 2 - CATEGORÍAS [COMPLETADO]
+[x] CRUD Categorías
+[x] Formulario con validaciones
 
-FASE 3 - MÓDULO DE JUEGOS:
-[ ] Crear página de Juegos
-[ ] Implementar formulario de registro de juegos
-[ ] Implementar cálculo automático del tabulador
-[ ] Conectar con Firebase para guardar juegos
-[ ] Implementar edición y eliminación
+FASE 3 - JUEGOS CORE [COMPLETADO]
+[x] Formulario "Cargar Juego" animado
+[x] Selector de Hora avanzado
+[x] Cálculo automático de costos
+[x] Lista de juegos con filtros (Fecha, Categoría, Status)
+[x] Animaciones de lista (Staggered fade-in)
 
-FASE 4 - VISTAS Y REPORTES:
-[ ] Implementar vista Calendario (juegos del día)
-[ ] Implementar vista por Equipos
-[ ] Agregar filtros por fecha y categoría
-[ ] Implementar cálculos y totales
-[ ] Diseño responsive de las vistas
+FASE 4 - PAGOS Y LOGICA DE NEGOCIO [COMPLETADO]
+[x] Toggle de pagos por equipo
+[x] Captura de referencia de pago
+[x] Cambio automático de estatus a "Completado"
+[x] Librería de Selects personalizada (`SelectField`)
 
-FASE 5 - MEJORAS Y PULIDO:
-[ ] Optimizar rendimiento
-[ ] Agregar loading states
-[ ] Mejorar mensajes de error
-[ ] Testing en diferentes dispositivos
-[ ] Documentación básica
-
-FASE 6 - FUNCIONALIDADES EXTRA (OPCIONAL):
-[ ] Dashboard con estadísticas
-[ ] Exportar a PDF/Excel
-[ ] Campo de hora para los juegos
-[ ] Estados de juegos (pendiente/completado)
-[ ] Historial de cambios
+FASE 5 - REFINAMIENTO UX [EN PROGRESO]
+[x] Estandarización de inputs (Selects, Text, Date)
+[ ] Tooltips para referencias de pago
+[ ] Exportación de reportes (PDF/Excel)
+[ ] Dashboard con gráficas (Próximo paso)
 
 ================================================================================
-CASOS DE USO PRINCIPALES
+CASOS DE USO ACTIVOS
 ================================================================================
 
-1. "Como administrador, quiero agregar una nueva categoría para poder 
-   calcular el tabulador de juegos de esa categoría"
-
-2. "Como administrador, quiero modificar el precio de una categoría 
-   cuando cambien las tarifas de arbitraje"
-
-3. "Como usuario, quiero registrar un juego del día indicando los equipos 
-   y la categoría para que se calcule automáticamente el costo"
-
-4. "Como usuario, quiero ver todos los juegos del día en formato calendario 
-   para tener una visión general del tabulador diario"
-
-5. "Como usuario, quiero ver cuántos juegos tuvo cada equipo para 
-   calcular los costos individuales por equipo"
-
-6. "Como usuario, quiero filtrar juegos por fecha para ver tabuladores 
-   de días específicos o rangos de fechas"
+1. "Como usuario, inicio sesión para ver mis juegos privados."
+2. "Registro un juego y selecciono la hora con el nuevo selector estilo móvil."
+3. "En la lista, marco el Equipo A como 'Pagado' e ingreso la referencia bancaria."
+4. "Al marcar el Equipo B como 'Pagado', el juego se completa solo."
+5. "Filtro los juegos por categoría usando los nuevos selectores premium."
 
 ================================================================================
-CONSIDERACIONES TÉCNICAS IMPORTANTES
+NOTAS PARA EL DESARROLLADOR
 ================================================================================
-
-- Usar Server Components cuando sea posible (Next.js App Router)
-- Implementar real-time updates con Firestore listeners
-- Manejar errores de red y Firebase adecuadamente
-- Validar datos en cliente y considerar reglas de seguridad en Firebase
-- Optimizar queries de Firestore (índices, límites)
-- Implementar skeleton loaders para mejor UX
-- Considerar caché de datos para reducir lecturas de Firebase
-
-================================================================================
-NOTAS FINALES
-================================================================================
-
-Este planteamiento proporciona una base sólida para comenzar el desarrollo.
-Se recomienda comenzar con el MVP (Fases 1-3) y luego iterar con mejoras.
-El diseño debe ser premium y profesional, aprovechando las capacidades de
-Tailwind CSS para crear una experiencia visual moderna y atractiva.
-
-Última actualización: 2025-12-28
+- Mantener siempre la estética "Dark Mode Only". No reintroducir estilos claros.
+- Los componentes UI base están en `src/components/ui/motion.tsx` y `SelectField.tsx`.
+- Usar `Controller` de `react-hook-form` para componentes complejos (Select, Date, Time).

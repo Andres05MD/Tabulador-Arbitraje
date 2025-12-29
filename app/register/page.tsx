@@ -61,71 +61,95 @@ export default function RegisterPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="glass-card p-8 w-full max-w-md">
+            <div className="glass-card p-8 w-full max-w-md shadow-2xl border border-white/20 dark:border-gray-700/50 backdrop-blur-xl animate-scale-in">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 dark:from-primary-400 dark:to-secondary-400 bg-clip-text text-transparent mb-2">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg transform hover:rotate-6 transition-transform duration-300">
+                        <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                    </div>
+                    <h1 className="text-4xl font-extrabold bg-gradient-to-r from-primary-600 to-secondary-600 dark:from-primary-400 dark:to-secondary-400 bg-clip-text text-transparent mb-3 tracking-tight">
                         Crear Cuenta
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-300">
-                        Regístrate en Tabulador de Arbitraje
+                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                        Tabulador de Arbitraje
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     {/* Display Name */}
-                    <div>
-                        <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <div className="space-y-1">
+                        <label htmlFor="displayName" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
                             Nombre Completo
                         </label>
-                        <input
-                            {...register('displayName')}
-                            type="text"
-                            id="displayName"
-                            placeholder="Juan Pérez"
-                            className="input-field"
-                            disabled={isSubmitting}
-                        />
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <input
+                                {...register('displayName')}
+                                type="text"
+                                id="displayName"
+                                placeholder="Juan Pérez"
+                                className="input-field pl-10 py-3 bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 rounded-xl"
+                                disabled={isSubmitting}
+                            />
+                        </div>
                         {errors.displayName && (
-                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.displayName.message}</p>
+                            <p className="pl-1 text-sm text-red-500 font-medium animate-pulse">{errors.displayName.message}</p>
                         )}
                     </div>
 
                     {/* Email */}
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <div className="space-y-1">
+                        <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
                             Correo Electrónico
                         </label>
-                        <input
-                            {...register('email')}
-                            type="email"
-                            id="email"
-                            placeholder="tu@email.com"
-                            className="input-field"
-                            disabled={isSubmitting}
-                        />
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <input
+                                {...register('email')}
+                                type="email"
+                                id="email"
+                                placeholder="tu@email.com"
+                                className="input-field pl-10 py-3 bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 rounded-xl"
+                                disabled={isSubmitting}
+                            />
+                        </div>
                         {errors.email && (
-                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>
+                            <p className="pl-1 text-sm text-red-500 font-medium animate-pulse">{errors.email.message}</p>
                         )}
                     </div>
 
                     {/* Password */}
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <div className="space-y-1">
+                        <label htmlFor="password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
                             Contraseña
                         </label>
-                        <div className="relative">
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
                             <input
                                 {...register('password')}
                                 type={showPassword ? 'text' : 'password'}
                                 id="password"
                                 placeholder="••••••••"
-                                className="input-field pr-10"
+                                className="input-field pl-10 pr-10 py-3 bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 rounded-xl"
                                 disabled={isSubmitting}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors p-1"
                             >
                                 {showPassword ? (
                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,31 +164,36 @@ export default function RegisterPage() {
                             </button>
                         </div>
                         {errors.password && (
-                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password.message}</p>
+                            <p className="pl-1 text-sm text-red-500 font-medium animate-pulse">{errors.password.message}</p>
                         )}
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 pl-1">
                             Mínimo 6 caracteres, debe incluir una mayúscula y un número
                         </p>
                     </div>
 
                     {/* Confirm Password */}
-                    <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <div className="space-y-1">
+                        <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
                             Confirmar Contraseña
                         </label>
-                        <div className="relative">
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
                             <input
                                 {...register('confirmPassword')}
                                 type={showConfirmPassword ? 'text' : 'password'}
                                 id="confirmPassword"
                                 placeholder="••••••••"
-                                className="input-field pr-10"
+                                className="input-field pl-10 pr-10 py-3 bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 rounded-xl"
                                 disabled={isSubmitting}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors p-1"
                             >
                                 {showConfirmPassword ? (
                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -179,7 +208,7 @@ export default function RegisterPage() {
                             </button>
                         </div>
                         {errors.confirmPassword && (
-                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.confirmPassword.message}</p>
+                            <p className="pl-1 text-sm text-red-500 font-medium animate-pulse">{errors.confirmPassword.message}</p>
                         )}
                     </div>
 
@@ -187,7 +216,7 @@ export default function RegisterPage() {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="btn-primary w-full py-3.5 text-lg shadow-lg hover:shadow-primary-500/30 active:scale-[0.98] transition-all duration-200 rounded-xl font-bold tracking-wide"
                     >
                         {isSubmitting ? (
                             <span className="flex items-center justify-center">

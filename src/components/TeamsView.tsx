@@ -14,9 +14,10 @@ interface TeamsViewProps {
     games: Game[];
     onEditGame: (game: Game) => void;
     onDeleteGame: (game: Game) => void;
+    onTogglePayment: (game: Game, team: 'A' | 'B') => void;
 }
 
-export default function TeamsView({ games, onEditGame, onDeleteGame }: TeamsViewProps) {
+export default function TeamsView({ games, onEditGame, onDeleteGame, onTogglePayment }: TeamsViewProps) {
     // Agrupar juegos por equipo
     const teamsSummary = games.reduce((acc, game) => {
         // Procesar Equipo A
@@ -99,6 +100,7 @@ export default function TeamsView({ games, onEditGame, onDeleteGame }: TeamsView
                         {team.games.map((game) => {
                             const isTeamA = game.teamA === team.teamName;
                             const opponent = isTeamA ? game.teamB : game.teamA;
+                            const isPaid = isTeamA ? game.isPaidTeamA : game.isPaidTeamB;
 
                             return (
                                 <div
@@ -113,17 +115,31 @@ export default function TeamsView({ games, onEditGame, onDeleteGame }: TeamsView
                                             {game.status && game.status !== 'pending' && (
                                                 <span
                                                     className={`px-2 py-0.5 text-xs font-medium rounded ${game.status === 'completed'
-                                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                                            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                                        : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                                                         }`}
                                                 >
                                                     {game.status === 'completed' ? 'Completado' : 'Cancelado'}
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                                            vs <strong>{opponent}</strong>
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => onTogglePayment(game, isTeamA ? 'A' : 'B')}
+                                                title={isPaid ? "PAGADO" : "Marcar como PAGADO"}
+                                                className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${isPaid
+                                                        ? 'bg-green-500 text-white shadow-sm'
+                                                        : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                                    }`}
+                                            >
+                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </button>
+                                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                                                vs <strong>{opponent}</strong>
+                                            </p>
+                                        </div>
                                     </div>
                                     <div className="flex gap-2">
                                         <button

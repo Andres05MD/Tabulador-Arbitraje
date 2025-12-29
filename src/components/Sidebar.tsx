@@ -3,10 +3,39 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
-import ThemeToggle from './ThemeToggle';
+
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { logoutUser } from '@/src/lib/authService';
+
+import { useDollarRate } from '@/src/hooks/useDollarRate';
+
+function DollarReference() {
+    const { rate, loading, error, formatCurrency } = useDollarRate();
+
+    if (loading) return <div className="px-4 py-2 text-xs text-slate-500 animate-pulse text-center">Cargando tasa...</div>;
+    if (error || !rate) return null;
+
+    return (
+        <div className="mx-4 mb-4 p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-2 border-emerald-300 dark:border-emerald-800/40 shadow-md">
+            <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></div>
+                    <span className="text-xs font-bold uppercase text-emerald-800 dark:text-emerald-400 tracking-wider">Tasa BCV</span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-500 bg-emerald-200 dark:bg-emerald-900/40 px-1.5 py-0.5 rounded">USD</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+                <span className="text-xl font-extrabold text-emerald-900 dark:text-emerald-100 tracking-tight">
+                    {formatCurrency(rate, 'Bs')}
+                </span>
+            </div>
+            <div className="mt-1 text-[10px] font-medium text-emerald-700 dark:text-emerald-500/60 truncate">
+                Banco Central de Venezuela
+            </div>
+        </div>
+    );
+}
 
 export default function Sidebar() {
     const pathname = usePathname();
@@ -28,14 +57,26 @@ export default function Sidebar() {
             )
         },
         {
-            name: 'Juegos',
+            name: 'Lista de Juegos',
             href: '/juegos',
             icon: (
                 <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                />
+            )
+        },
+        {
+            name: 'Cargar Juego',
+            href: '/juegos/cargar',
+            icon: (
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
             )
         },
@@ -90,11 +131,11 @@ export default function Sidebar() {
             {/* Mobile Menu Button - Fixed Top Right */}
             <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden fixed top-4 left-4 z-50 p-3 rounded-xl glass-card shadow-lg hover:shadow-xl transition-all duration-300"
+                className="lg:hidden fixed top-4 left-4 z-50 p-3 rounded-xl bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 transition-all duration-300"
                 aria-label="Toggle Menu"
             >
                 <svg
-                    className="w-6 h-6 text-gray-700 dark:text-gray-200"
+                    className="w-6 h-6 text-slate-700 dark:text-slate-200"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -120,7 +161,7 @@ export default function Sidebar() {
             {/* Overlay for mobile */}
             {sidebarOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fade-in"
+                    className="lg:hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 animate-fade-in"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
@@ -129,16 +170,18 @@ export default function Sidebar() {
             <aside
                 className={`
                     fixed top-0 left-0 h-screen w-72 z-40
-                    glass-card border-r border-gray-200/20 dark:border-gray-700/50
+                    bg-white dark:bg-slate-900 
+                    border-r border-slate-200 dark:border-slate-700/50
                     flex flex-col
                     transition-transform duration-300 ease-in-out
+                    shadow-xl
                     ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 `}
             >
                 {/* Logo Section */}
-                <div className="p-6 border-b border-gray-200/20 dark:border-gray-700/50">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800">
                     <Link href="/categorias" className="flex items-center space-x-3 group">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                        <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-primary-500/30">
                             <svg
                                 className="w-7 h-7 text-white"
                                 fill="none"
@@ -154,10 +197,10 @@ export default function Sidebar() {
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-lg font-bold bg-gradient-to-r from-primary-600 to-secondary-600 dark:from-primary-400 dark:to-secondary-400 bg-clip-text text-transparent">
+                            <h1 className="text-xl font-extrabold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
                                 Tabulador
                             </h1>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Arbitraje</p>
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Arbitraje</p>
                         </div>
                     </Link>
                 </div>
@@ -170,18 +213,18 @@ export default function Sidebar() {
                             href={item.href}
                             onClick={() => setSidebarOpen(false)}
                             className={`
-                                flex items-center space-x-3 px-4 py-3 rounded-xl
-                                font-medium transition-all duration-300
+                                flex items-center space-x-3 px-4 py-3.5 rounded-xl
+                                font-bold transition-all duration-300
                                 ${isActive(item.href)
-                                    ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg shadow-primary-500/30'
-                                    : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 shadow-sm border border-primary-100 dark:border-primary-800/30'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
                                 }
                             `}
                         >
                             <svg
-                                className="w-5 h-5"
-                                fill="none"
+                                className={`w-5 h-5 ${isActive(item.href) ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'}`}
                                 viewBox="0 0 24 24"
+                                fill="none"
                                 stroke="currentColor"
                             >
                                 {item.icon}
@@ -192,23 +235,21 @@ export default function Sidebar() {
                 </nav>
 
                 {/* User Section & Theme Toggle */}
-                <div className="p-4 border-t border-gray-200/20 dark:border-gray-700/50 space-y-4">
-                    {/* Theme Toggle */}
-                    <div className="flex items-center justify-between px-4 py-2">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Tema
-                        </span>
-                        <ThemeToggle />
-                    </div>
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+
+                    {/* Dollar Reference Component */}
+                    <DollarReference />
+
+
 
                     {/* User Info */}
                     {!loading && user && (
                         <div className="space-y-3">
-                            <div className="px-4 py-3 rounded-xl bg-gradient-to-br from-white/50 to-white/30 dark:from-gray-800/50 dark:to-gray-800/30 border border-gray-200/20 dark:border-gray-700/50">
-                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                            <div className="px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-300 dark:border-slate-700">
+                                <p className="text-sm font-bold text-slate-900 dark:text-slate-200 truncate">
                                     {user.displayName || 'Usuario'}
                                 </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
                                     {user.email}
                                 </p>
                             </div>
@@ -216,9 +257,10 @@ export default function Sidebar() {
                             <button
                                 onClick={handleLogout}
                                 className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl
-                                    bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700
-                                    text-white font-medium shadow-lg shadow-red-500/30
-                                    transition-all duration-300 hover:shadow-xl"
+                                    bg-white dark:bg-slate-800
+                                    text-red-700 dark:text-red-400 font-bold border-2 border-red-300 dark:border-red-900/40
+                                    hover:bg-red-50 dark:hover:bg-red-900/20
+                                    transition-all duration-300 shadow-md hover:shadow-lg"
                             >
                                 <svg
                                     className="w-5 h-5"
@@ -243,18 +285,18 @@ export default function Sidebar() {
                             <Link
                                 href="/login"
                                 className="block w-full px-4 py-3 text-center rounded-xl
-                                    bg-white/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300
-                                    font-medium hover:bg-white/70 dark:hover:bg-gray-700/70
-                                    transition-all duration-300"
+                                    bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300
+                                    font-bold hover:bg-slate-200 dark:hover:bg-slate-700
+                                    border-2 border-slate-400 dark:border-slate-600
+                                    transition-all duration-300 shadow-md"
                             >
                                 Iniciar Sesión
                             </Link>
                             <Link
                                 href="/register"
                                 className="block w-full px-4 py-3 text-center rounded-xl
-                                    bg-gradient-to-r from-primary-500 to-secondary-500
-                                    text-white font-medium shadow-lg shadow-primary-500/30
-                                    hover:shadow-xl transition-all duration-300"
+                                    bg-primary-600 text-white font-bold shadow-lg shadow-primary-500/30
+                                    hover:bg-primary-700 transform hover:scale-[1.02] transition-all duration-300"
                             >
                                 Registrarse
                             </Link>

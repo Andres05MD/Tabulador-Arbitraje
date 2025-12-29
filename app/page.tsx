@@ -15,7 +15,7 @@ export default function Home() {
         router.push('/login');
       } else {
         // Si hay usuario autenticado, redirigir a la página de categorías
-        router.push('/categorias');
+        router.push('/juegos');
       }
     }
   }, [user, loading, router]);

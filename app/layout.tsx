@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/src/components/ThemeProvider";
 import { AuthProvider } from "@/src/components/AuthProvider";
-import Sidebar from "@/src/components/Sidebar";
+import MainLayout from "@/src/components/MainLayout";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,19 +23,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
+      <body className={`${inter.className} antialiased min-h-screen selection:bg-primary-500 selection:text-white`}>
         <ThemeProvider>
           <AuthProvider>
-            <div className="min-h-screen flex">
-              <Sidebar />
-              <main className="flex-1 lg:ml-72 transition-all duration-300">
-                {children}
-              </main>
-            </div>
+            <MainLayout>
+              {children}
+            </MainLayout>
           </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
-

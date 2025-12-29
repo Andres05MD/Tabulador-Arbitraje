@@ -4,13 +4,14 @@ import { useEffect, useState, useMemo } from 'react';
 import Swal from 'sweetalert2';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Link from 'next/link';
 import type { Game, Category } from '@/src/types';
 import {
     subscribeToGames,
-    createGame,
     updateGame,
     deleteGame,
     updateGameStatus,
+    updateGamePaymentStatus,
 } from '@/src/lib/gameService';
 import { subscribeToCategories } from '@/src/lib/categoryService';
 import GameForm from '@/src/components/GameForm';
@@ -21,6 +22,8 @@ import TeamsView from '@/src/components/TeamsView';
 import type { GameFormData } from '@/src/lib/validations';
 
 import { useAuth } from '@/src/components/AuthProvider';
+import { MotionDiv, staggerContainer, GlassCard, MotionButton } from '@/src/components/ui/motion';
+import { AnimatePresence } from 'framer-motion';
 
 export default function JuegosPage() {
     const { user } = useAuth();
@@ -28,7 +31,7 @@ export default function JuegosPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showForm, setShowForm] = useState(false);
+    const [showEditForm, setShowEditForm] = useState(false);
     const [editingGame, setEditingGame] = useState<Game | null>(null);
 
     // Filtros
@@ -122,28 +125,13 @@ export default function JuegosPage() {
         });
     }, [games, searchQuery, selectedCategory, selectedStatus]);
 
-    const handleCreate = () => {
-        if (categories.length === 0) {
-            Swal.fire({
-                title: 'Sin Categorías',
-                text: 'Primero debes crear categorías antes de registrar juegos.',
-                icon: 'warning',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#0ea5e9',
-            });
-            return;
-        }
-        setEditingGame(null);
-        setShowForm(true);
-    };
-
     const handleEdit = (game: Game) => {
         setEditingGame(game);
-        setShowForm(true);
+        setShowEditForm(true);
     };
 
     const handleSubmit = async (data: GameFormData) => {
-        if (!user) return;
+        if (!user || !editingGame) return;
 
         try {
             const category = categories.find((cat) => cat.id === data.categoryId);
@@ -151,29 +139,16 @@ export default function JuegosPage() {
                 throw new Error('Categoría no encontrada');
             }
 
-            if (editingGame) {
-                await updateGame(editingGame.id, data, category);
-                await Swal.fire({
-                    title: '¡Actualizado!',
-                    text: 'El juego se ha actualizado correctamente',
-                    icon: 'success',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#0ea5e9',
-                });
-            } else {
-                await createGame({
-                    ...data,
-                    ownerId: user.uid,
-                }, category);
-                await Swal.fire({
-                    title: '¡Registrado!',
-                    text: 'El juego se ha registrado correctamente',
-                    icon: 'success',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#0ea5e9',
-                });
-            }
-            setShowForm(false);
+            await updateGame(editingGame.id, data, category);
+            await Swal.fire({
+                title: '¡Actualizado!',
+                text: 'El juego se ha actualizado correctamente',
+                icon: 'success',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#0ea5e9',
+            });
+
+            setShowEditForm(false);
             setEditingGame(null);
         } catch (error) {
             console.error('Error saving game:', error);
@@ -204,6 +179,64 @@ export default function JuegosPage() {
             await Swal.fire({
                 title: 'Error',
                 text: 'Hubo un error al actualizar el estado',
+                icon: 'error',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#ef4444',
+            });
+        }
+    };
+
+    const handlePaymentToggle = async (game: Game, team: 'A' | 'B') => {
+        try {
+            const currentStatus = team === 'A' ? game.isPaidTeamA : game.isPaidTeamB;
+            const newPaymentStatus = !currentStatus;
+            let paymentRef = undefined;
+
+            // Si se va a marcar como pagado, pedir referencia opcional
+            if (newPaymentStatus) {
+                const { value: reference, isDismissed } = await Swal.fire({
+                    title: 'Referencia de Pago',
+                    text: 'Ingresa la referencia de la operación (Opcional)',
+                    input: 'text',
+                    inputPlaceholder: 'Ej: 123456...',
+                    showCancelButton: true,
+                    confirmButtonText: 'Guardar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#0ea5e9',
+                    cancelButtonColor: '#6b7280',
+                    background: '#1e293b', // Fondo oscuro para coincidir con tema
+                    color: '#fff',
+                });
+
+                // Si el usuario cancela, no hacemos nada
+                if (isDismissed) return;
+
+                paymentRef = reference;
+            }
+
+            await updateGamePaymentStatus(game.id, team, newPaymentStatus, paymentRef);
+
+            // Feedback visual sutil (Toast)
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                background: '#1e293b',
+                color: '#fff'
+            });
+
+            Toast.fire({
+                icon: 'success',
+                title: newPaymentStatus ? 'Pago registrado' : 'Pago revertido'
+            });
+
+        } catch (error) {
+            console.error('Error updating payment status:', error);
+            await Swal.fire({
+                title: 'Error',
+                text: 'Hubo un error al actualizar el pago',
                 icon: 'error',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#ef4444',
@@ -247,7 +280,7 @@ export default function JuegosPage() {
     };
 
     const handleCancel = () => {
-        setShowForm(false);
+        setShowEditForm(false);
         setEditingGame(null);
     };
 
@@ -305,20 +338,20 @@ export default function JuegosPage() {
     return (
         <div className="page-container">
             <div className="flex justify-between items-center mb-8">
-                <h1 className="page-title mb-0">Gestión de Juegos</h1>
-                {!showForm && (
-                    <button onClick={handleCreate} className="btn-primary">
+                <h1 className="page-title mb-0">Juegos del Día</h1>
+                {!showEditForm && (
+                    <Link href="/juegos/cargar" className="btn-primary">
                         <svg className="w-5 h-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        Nuevo Juego
-                    </button>
+                        Cargar Juego
+                    </Link>
                 )}
             </div>
 
-            {showForm ? (
+            {showEditForm ? (
                 <div className="glass-card p-6 mb-6 animate-slide-down">
-                    <h2 className="section-title">{editingGame ? 'Editar Juego' : 'Nuevo Juego'}</h2>
+                    <h2 className="section-title">Editar Juego</h2>
                     <GameForm
                         game={editingGame || undefined}
                         categories={categories}
@@ -385,114 +418,130 @@ export default function JuegosPage() {
                                     : 'Intenta ajustar los filtros para ver más resultados'}
                             </p>
                             {games.length === 0 && (
-                                <button onClick={handleCreate} className="btn-primary">
+                                <Link href="/juegos/cargar" className="btn-primary inline-flex">
                                     Registrar Primer Juego
-                                </button>
+                                </Link>
                             )}
                         </div>
                     ) : viewMode === 'teams' ? (
-                        <TeamsView games={filteredGames} onEditGame={handleEdit} onDeleteGame={handleDelete} />
+                        <TeamsView
+                            games={filteredGames}
+                            onEditGame={handleEdit}
+                            onDeleteGame={handleDelete}
+                            onTogglePayment={handlePaymentToggle}
+                        />
                     ) : (
-                        <div className="space-y-4">
-                            {filteredGames.map((game) => {
-                                const gameStatus = game.status || 'pending';
-                                return (
-                                    <div key={game.id} className="glass-card-hover p-5">
-                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                                    <span className="px-3 py-1 text-sm font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
-                                                        {game.categoryName}
-                                                    </span>
-                                                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {format(game.date.toDate(), "d 'de' MMMM, yyyy", { locale: es })}
-                                                        {game.time && ` - ${game.time}`}
-                                                    </span>
-                                                    {gameStatus !== 'pending' && (
-                                                        <span
-                                                            className={`px-2 py-0.5 text-xs font-medium rounded ${gameStatus === 'completed'
-                                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                                                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                                                                }`}
-                                                        >
-                                                            {gameStatus === 'completed' ? 'Completado' : 'Cancelado'}
+                        <MotionDiv
+                            variants={staggerContainer}
+                            initial="hidden"
+                            animate="visible"
+                            className="space-y-4"
+                        >
+                            <AnimatePresence>
+                                {filteredGames.map((game) => {
+                                    const gameStatus = game.status || 'pending';
+                                    return (
+                                        <GlassCard
+                                            key={game.id}
+                                            layout
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            className="p-5 relative overflow-hidden group"
+                                        >
+                                            {/* Indicador lateral de estado del juego */}
+                                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300 ${gameStatus === 'completed' ? 'bg-green-500' :
+                                                gameStatus === 'cancelled' ? 'bg-red-500' : 'bg-primary-500'
+                                                }`}></div>
+
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pl-3">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-3 mb-3 flex-wrap">
+                                                        <span className="px-3 py-1 text-xs font-bold uppercase bg-primary-500/10 text-primary-400 border border-primary-500/20 rounded-full tracking-wide">
+                                                            {game.categoryName}
                                                         </span>
-                                                    )}
-                                                </div>
-                                                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                                                    {game.teamA} <span className="text-gray-400 mx-2">vs</span> {game.teamB}
-                                                </h3>
-                                            </div>
+                                                        <span className="text-sm font-medium text-slate-400">
+                                                            {format(game.date.toDate(), "d 'de' MMMM", { locale: es })}
+                                                            {game.time && ` • ${game.time}`}
+                                                        </span>
+                                                        {gameStatus !== 'pending' && (
+                                                            <span
+                                                                className={`px-2 py-0.5 text-xs font-bold uppercase rounded border ${gameStatus === 'completed'
+                                                                    ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                                                    : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                                    }`}
+                                                            >
+                                                                {gameStatus === 'completed' ? 'Completado' : 'Cancelado'}
+                                                            </span>
+                                                        )}
+                                                    </div>
 
-                                            <div className="flex items-center gap-4">
-                                                <div className="text-right">
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Tabulador:</p>
-                                                    <PriceDisplay usdAmount={game.totalCost} showBoth={true} />
-                                                </div>
+                                                    <div className="flex items-center gap-6 mb-2">
+                                                        {/* Equipo A */}
+                                                        <div className="flex items-center gap-3">
+                                                            <MotionButton
+                                                                onClick={() => handlePaymentToggle(game, 'A')}
+                                                                title={game.isPaidTeamA ? "Marcado como PAGADO" : "Marcar como PAGADO"}
+                                                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${game.isPaidTeamA
+                                                                    ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                                                                    : 'bg-slate-800 text-slate-500 border border-slate-600 hover:border-slate-400'
+                                                                    }`}
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                            </MotionButton>
+                                                            <span className={`text-xl font-bold ${game.isPaidTeamA ? 'text-green-400' : 'text-white'}`}>
+                                                                {game.teamA}
+                                                            </span>
+                                                        </div>
 
-                                                <div className="flex gap-2">
-                                                    {/* Dropdown de estado */}
-                                                    <div className="relative group">
-                                                        <button
-                                                            className={`p-2 rounded-lg transition-colors ${gameStatus === 'completed'
-                                                                ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                                                                : gameStatus === 'cancelled'
-                                                                    ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                                                                    : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400'
-                                                                }`}
-                                                            title="Cambiar estado"
-                                                        >
-                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                        </button>
-                                                        <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                                                            <button
-                                                                onClick={() => handleChangeStatus(game, 'pending')}
-                                                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
+                                                        <span className="text-slate-600 font-light text-2xl">/</span>
+
+                                                        {/* Equipo B */}
+                                                        <div className="flex items-center gap-3">
+                                                            <span className={`text-xl font-bold ${game.isPaidTeamB ? 'text-green-400' : 'text-white'}`}>
+                                                                {game.teamB}
+                                                            </span>
+                                                            <MotionButton
+                                                                onClick={() => handlePaymentToggle(game, 'B')}
+                                                                title={game.isPaidTeamB ? "Marcado como PAGADO" : "Marcar como PAGADO"}
+                                                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${game.isPaidTeamB
+                                                                    ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                                                                    : 'bg-slate-800 text-slate-500 border border-slate-600 hover:border-slate-400'
+                                                                    }`}
                                                             >
-                                                                Pendiente
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleChangeStatus(game, 'completed')}
-                                                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                            >
-                                                                Completado
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleChangeStatus(game, 'cancelled')}
-                                                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg"
-                                                            >
-                                                                Cancelado
-                                                            </button>
+                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                            </MotionButton>
                                                         </div>
                                                     </div>
 
-                                                    <button
-                                                        onClick={() => handleEdit(game)}
-                                                        className="p-2 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                                                        title="Editar"
-                                                    >
-                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(game)}
-                                                        className="p-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                                                        title="Eliminar"
-                                                    >
-                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    </button>
+                                                    {/* Referencias en vista de lista */}
+                                                    {(game.paymentRefTeamA || game.paymentRefTeamB) && (
+                                                        <div className="flex gap-3 mt-1 ml-11">
+                                                            {game.paymentRefTeamA && <span className="text-[10px] text-slate-500">Ref A: {game.paymentRefTeamA}</span>}
+                                                            {game.paymentRefTeamB && <span className="text-[10px] text-slate-500">Ref B: {game.paymentRefTeamB}</span>}
+                                                        </div>
+                                                    )}
                                                 </div>
+
+                                                <button
+                                                    onClick={() => handleDelete(game)}
+                                                    className="p-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                                    title="Eliminar"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
                                             </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                        </GlassCard>
+                                    );
+                                })}
+                            </AnimatePresence>
+                        </MotionDiv>
                     )}
                 </>
             )}

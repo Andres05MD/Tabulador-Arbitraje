@@ -17,29 +17,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         setMounted(true);
-        // Verificar preferencia guardada en localStorage
-        const savedTheme = localStorage.getItem('theme') as Theme;
-        if (savedTheme) {
-            setTheme(savedTheme);
-            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-        } else {
-            // Verificar preferencia del sistema
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const initialTheme = prefersDark ? 'dark' : 'light';
-            setTheme(initialTheme);
-            document.documentElement.classList.toggle('dark', initialTheme === 'dark');
-        }
+        // Siempre aplicar el modo oscuro
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = 'dark';
     }, []);
 
-    const toggleTheme = () => {
-        const newTheme = theme === 'light' ? 'dark' : 'light';
-        setTheme(newTheme);
-        localStorage.setItem('theme', newTheme);
-        document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    if (!mounted) {
+        return <>{children}</>;
+    }
+
+    // El valor del contexto ya no importa mucho, pero lo mantenemos compatible
+    const themeContextValue = {
+        theme: 'dark' as Theme,
+        toggleTheme: () => { console.log('Dark mode is enforced'); }
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext.Provider value={themeContextValue}>
             {children}
         </ThemeContext.Provider>
     );

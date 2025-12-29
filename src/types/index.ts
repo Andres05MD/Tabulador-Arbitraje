@@ -19,6 +19,10 @@ export interface Game {
     teamB: string;
     totalCost: number;
     status?: 'pending' | 'completed' | 'cancelled';
+    isPaidTeamA?: boolean;
+    isPaidTeamB?: boolean;
+    paymentRefTeamA?: string;
+    paymentRefTeamB?: string;
     ownerId?: string;
     createdAt: Timestamp;
     updatedAt: Timestamp;
