@@ -17,7 +17,7 @@ import type { CategoryFormData } from '@/src/lib/validations';
 import { useAuth } from '@/src/components/AuthProvider';
 
 export default function CategoriasPage() {
-    const { user } = useAuth();
+    const { user, role } = useAuth();
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -40,6 +40,8 @@ export default function CategoriasPage() {
 
                 // Detectar error de permisos de Firebase
                 if (err.code === 'permission-denied') {
+                    // Si es lectura, no debería pasar con las nuevas reglas, pero por si acaso.
+                    // Actually standard users CAN read categories globally now.
                     setError('firebase-permissions');
                 } else {
                     setError('Error al cargar las categorías. Por favor, intenta nuevamente.');
@@ -66,37 +68,28 @@ export default function CategoriasPage() {
         try {
             if (editingCategory) {
                 await updateCategory(editingCategory.id, data);
-                await Swal.fire({
-                    title: '¡Actualizado!',
-                    text: 'La categoría se ha actualizado correctamente',
-                    icon: 'success',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#0ea5e9',
-                });
             } else {
                 await createCategory({
                     ...data,
                     ownerId: user.uid,
                 });
-                await Swal.fire({
-                    title: '¡Creado!',
-                    text: 'La categoría se ha creado correctamente',
-                    icon: 'success',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#0ea5e9',
-                });
             }
+            await Swal.fire({
+                title: editingCategory ? '¡Actualizado!' : '¡Creado!',
+                text: `La categoría se ha ${editingCategory ? 'actualizado' : 'creado'} correctamente`,
+                icon: 'success',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#0ea5e9',
+            });
             setShowForm(false);
             setEditingCategory(null);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving category:', error);
-            await Swal.fire({
-                title: 'Error',
-                text: 'Hubo un error al guardar la categoría',
-                icon: 'error',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#ef4444',
-            });
+            if (error.code === 'permission-denied') {
+                await Swal.fire('Error', 'No tienes permisos para realizar esta acción.', 'error');
+            } else {
+                await Swal.fire('Error', 'Hubo un error al guardar la categoría', 'error');
+            }
         }
     };
 
@@ -122,15 +115,13 @@ export default function CategoriasPage() {
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#0ea5e9',
                 });
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error deleting category:', error);
-                await Swal.fire({
-                    title: 'Error',
-                    text: 'Hubo un error al eliminar la categoría',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#ef4444',
-                });
+                if (error.code === 'permission-denied') {
+                    await Swal.fire('Error', 'No tienes permisos para eliminar.', 'error');
+                } else {
+                    await Swal.fire('Error', 'Hubo un error al eliminar la categoría', 'error');
+                }
             }
         }
     };
@@ -149,34 +140,13 @@ export default function CategoriasPage() {
         );
     }
 
-    // Mostrar otros errores
     if (error) {
         return (
             <div className="page-container">
                 <div className="glass-card p-8 text-center">
-                    <svg
-                        className="w-16 h-16 mx-auto mb-4 text-red-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                        Error
-                    </h2>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Error</h2>
                     <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="btn-primary"
-                    >
-                        Reintentar
-                    </button>
+                    <button onClick={() => window.location.reload()} className="btn-primary">Reintentar</button>
                 </div>
             </div>
         );
@@ -186,20 +156,24 @@ export default function CategoriasPage() {
         return (
             <div className="page-container">
                 <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-500 mx-auto mb-4"></div>
-                        <p className="text-gray-600 dark:text-gray-300">Cargando categorías...</p>
-                    </div>
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-500"></div>
                 </div>
             </div>
         );
     }
 
+    // Role-based rendering: If not admin, show simple list or restricted view.
+    // Actually, user wants "access to a dedicated categories section" ONLY for Admin?
+    // "Admin Privileges: ... allowing access to ... a dedicated categories section."
+    // This implies non-admin should NOT even see this page?
+    // But they need read access internally.
+    // Let's assume if they land here manually, they see Read-Only list.
+
     return (
         <div className="page-container">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4 mt-10 sm:mt-0">
                 <h1 className="page-title mb-0 text-center sm:text-left w-full sm:w-auto">Gestión de Categorías</h1>
-                {!showForm && (
+                {!showForm && role === 'admin' && (
                     <button onClick={handleCreate} className="btn-primary w-full sm:w-auto justify-center">
                         <svg className="w-5 h-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -273,26 +247,28 @@ export default function CategoriasPage() {
                                         <PriceDisplay usdAmount={category.pricePerTeam * 2} showBoth={true} />
                                     </div>
 
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleEdit(category)}
-                                            className="flex-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                                        >
-                                            <svg className="w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                            Editar
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(category)}
-                                            className="flex-1 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                                        >
-                                            <svg className="w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            Eliminar
-                                        </button>
-                                    </div>
+                                    {role === 'admin' && (
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleEdit(category)}
+                                                className="flex-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                            >
+                                                <svg className="w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                                Editar
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(category)}
+                                                className="flex-1 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                            >
+                                                <svg className="w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

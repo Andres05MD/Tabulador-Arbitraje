@@ -6,8 +6,11 @@ import {
     User,
     sendPasswordResetEmail,
     updateProfile,
+    signInAnonymously,
 } from 'firebase/auth';
-import { auth } from './firebase';
+import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { auth, db } from './firebase';
+import type { UserProfile } from '@/src/types';
 
 // Registrar nuevo usuario
 export async function registerUser(email: string, password: string, displayName: string) {
@@ -18,14 +21,43 @@ export async function registerUser(email: string, password: string, displayName:
         await updateProfile(userCredential.user, {
             displayName,
         });
+
+        // Crear documento de usuario en Firestore
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+            uid: userCredential.user.uid,
+            email,
+            displayName,
+            role: 'user', // Por defecto
+            createdAt: Timestamp.now(),
+        });
     }
 
     return userCredential.user;
 }
 
+// Obtener rol del usuario
+export async function getUserRole(uid: string): Promise<'admin' | 'user' | null> {
+    try {
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        if (userDoc.exists()) {
+            return (userDoc.data() as UserProfile).role;
+        }
+        return null;
+    } catch (error) {
+        console.error('Error fetching user role:', error);
+        return null;
+    }
+}
+
 // Iniciar sesión
 export async function loginUser(email: string, password: string) {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+}
+
+// Iniciar sesión anónima
+export async function loginAnonymously() {
+    const userCredential = await signInAnonymously(auth);
     return userCredential.user;
 }
 

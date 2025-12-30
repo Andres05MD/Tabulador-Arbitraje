@@ -10,9 +10,11 @@ import GameForm from '@/src/components/GameForm';
 import FirebasePermissionsError from '@/src/components/FirebasePermissionsError';
 import type { GameFormData } from '@/src/lib/validations';
 import { useAuth } from '@/src/components/AuthProvider';
+import { useCourt } from '@/src/components/CourtProvider';
 
 export default function CargarJuegoPage() {
     const { user } = useAuth();
+    const { selectedCourt } = useCourt();
     const router = useRouter();
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
@@ -22,7 +24,7 @@ export default function CargarJuegoPage() {
         if (!user) return;
 
         const unsubscribe = subscribeToCategories(
-            user.uid,
+            null, // Global
             (updatedCategories) => {
                 setCategories(updatedCategories);
                 setLoading(false);
@@ -42,7 +44,7 @@ export default function CargarJuegoPage() {
     }, [user]);
 
     const handleSubmit = async (data: GameFormData) => {
-        if (!user) return;
+        if (!user || !selectedCourt) return;
 
         if (categories.length === 0) {
             Swal.fire({
@@ -64,6 +66,8 @@ export default function CargarJuegoPage() {
             await createGame({
                 ...data,
                 ownerId: user.uid,
+                courtId: selectedCourt.id,
+                courtName: selectedCourt.name,
             }, category);
 
             await Swal.fire({

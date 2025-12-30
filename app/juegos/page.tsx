@@ -12,6 +12,7 @@ import {
     deleteGame,
     updateGameStatus,
     updateGamePaymentStatus,
+    deleteOldGames,
 } from '@/src/lib/gameService';
 import { subscribeToCategories } from '@/src/lib/categoryService';
 import GameForm from '@/src/components/GameForm';
@@ -22,11 +23,13 @@ import TeamsView from '@/src/components/TeamsView';
 import type { GameFormData } from '@/src/lib/validations';
 
 import { useAuth } from '@/src/components/AuthProvider';
+import { useCourt } from '@/src/components/CourtProvider';
 import { MotionDiv, staggerContainer, GlassCard, MotionButton } from '@/src/components/ui/motion';
 import { AnimatePresence } from 'framer-motion';
 
 export default function JuegosPage() {
-    const { user } = useAuth();
+    const { user, role, loading: authLoading } = useAuth();
+    const { selectedCourt } = useCourt();
     const [games, setGames] = useState<Game[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,7 +44,12 @@ export default function JuegosPage() {
     const [selectedStatus, setSelectedStatus] = useState<GameStatus>('all');
 
     useEffect(() => {
-        if (!user) return;
+        if (authLoading || !user || !selectedCourt) return;
+
+        // Limpieza de juegos antiguos (solo admin)
+        if (role === 'admin') {
+            deleteOldGames().catch(console.error);
+        }
 
         let gamesUnsubscribe: (() => void) | null = null;
         let categoriesUnsubscribe: (() => void) | null = null;
@@ -49,13 +57,13 @@ export default function JuegosPage() {
 
         const checkLoading = () => {
             loadingCount--;
-            if (loadingCount === 0) {
+            if (loadingCount <= 0) {
                 setLoading(false);
             }
         };
 
         categoriesUnsubscribe = subscribeToCategories(
-            user.uid,
+            null, // Global categories
             (updatedCategories) => {
                 setCategories(updatedCategories);
                 checkLoading();
@@ -72,7 +80,11 @@ export default function JuegosPage() {
         );
 
         gamesUnsubscribe = subscribeToGames(
-            user.uid,
+            selectedCourt.id,
+            {
+                ownerId: role === 'admin' ? null : user.uid,
+                date: new Date() // Load only today's games by default
+            },
             (updatedGames) => {
                 setGames(updatedGames);
                 checkLoading();
@@ -92,7 +104,7 @@ export default function JuegosPage() {
             if (gamesUnsubscribe) gamesUnsubscribe();
             if (categoriesUnsubscribe) categoriesUnsubscribe();
         };
-    }, [user]);
+    }, [user, role, selectedCourt, authLoading]);
 
     // Aplicar filtros
     const filteredGames = useMemo(() => {

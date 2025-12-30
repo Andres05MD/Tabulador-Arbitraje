@@ -11,72 +11,78 @@ import {
     onSnapshot,
     getDoc,
     deleteField,
+    writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Game, Category } from '@/src/types';
 
 const COLLECTION_NAME = 'games';
 
-// Obtener todos los juegos de un usuario (snapshot en tiempo real)
-export function subscribeToGames(
-    ownerId: string,
-    callback: (games: Game[]) => void,
-    onError?: (error: any) => void
-) {
-    if (!ownerId) {
-        callback([]);
-        return () => { };
-    }
+// Eliminar juegos antiguos (más de 5 días)
+export async function deleteOldGames() {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 5);
+    const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
 
+    // Consultamos por fecha de juego
     const q = query(
         collection(db, COLLECTION_NAME),
-        where('ownerId', '==', ownerId)
+        where('date', '<', cutoffTimestamp)
     );
 
-    return onSnapshot(
-        q,
-        (snapshot) => {
-            const games: Game[] = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            } as Game));
+    const snapshot = await getDocs(q);
 
-            // Ordenar por fecha descendente en cliente
-            games.sort((a, b) => b.date.toMillis() - a.date.toMillis());
+    if (snapshot.empty) return;
 
-            callback(games);
-        },
-        (error) => {
-            console.error('Firestore subscription error:', error);
-            if (onError) {
-                onError(error);
-            }
-        }
-    );
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
 }
 
-// Obtener juegos por rango de fechas y usuario
-export function subscribeToGamesByDateRange(
-    ownerId: string,
-    startDate: Date,
-    endDate: Date,
+// Obtener juegos con filtros (Tiempo real)
+// Si ownerId es null, se asume Admin y se traen todos del court
+export function subscribeToGames(
+    courtId: string,
+    filters: {
+        date?: Date;
+        ownerId?: string | null;
+    },
     callback: (games: Game[]) => void,
     onError?: (error: any) => void
 ) {
-    if (!ownerId) {
+    if (!courtId) {
         callback([]);
         return () => { };
     }
 
-    const startTimestamp = Timestamp.fromDate(startDate);
-    const endTimestamp = Timestamp.fromDate(endDate);
-
-    const q = query(
+    let q = query(
         collection(db, COLLECTION_NAME),
-        where('ownerId', '==', ownerId),
-        where('date', '>=', startTimestamp),
-        where('date', '<=', endTimestamp)
+        where('courtId', '==', courtId)
     );
+
+    // Filtrar por dueño si no es admin (o si se quiere filtrar específico)
+    if (filters.ownerId) {
+        q = query(q, where('ownerId', '==', filters.ownerId));
+    }
+
+    // Filtrar por fecha (default: hoy, pero manejado por el componente mejor?)
+    // El prompt dice "cargar los juegos del dia".
+    // Si pasamos fecha, filtramos.
+    if (filters.date) {
+        const start = new Date(filters.date);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(filters.date);
+        end.setHours(23, 59, 59, 999);
+
+        q = query(
+            q,
+            where('date', '>=', Timestamp.fromDate(start)),
+            where('date', '<=', Timestamp.fromDate(end))
+        );
+    }
 
     return onSnapshot(
         q,
@@ -86,7 +92,7 @@ export function subscribeToGamesByDateRange(
                 ...doc.data(),
             } as Game));
 
-            // Ordenar por fecha descendente en cliente
+            // Ordenar por fecha/hora descendente en cliente
             games.sort((a, b) => b.date.toMillis() - a.date.toMillis());
 
             callback(games);
@@ -109,6 +115,8 @@ export async function createGame(
         teamA: string;
         teamB: string;
         ownerId: string;
+        courtId: string;
+        courtName: string;
     },
     category: Category
 ): Promise<string> {
@@ -127,6 +135,8 @@ export async function createGame(
         isPaidTeamA: false,
         isPaidTeamB: false,
         ownerId: data.ownerId,
+        courtId: data.courtId,
+        courtName: data.courtName,
         createdAt: now,
         updatedAt: now,
     });
@@ -192,17 +202,10 @@ export async function updateGamePaymentStatus(
     const isPaidTeamA = team === 'A' ? isPaid : gameData.isPaidTeamA;
     const isPaidTeamB = team === 'B' ? isPaid : gameData.isPaidTeamB;
 
-    // Si ambos están pagados, el estado es 'completed', si no 'pending'
-    // Mantenemos 'cancelled' si estaba cancelado y se modifican pagos? 
-    // Asumiremos que el pago reactiva el flujo, o simplemente cambiamos a completed/pending.
-    // Si estaba cancelled y pagamos, probablemente debería seguir cancelled o pasar a completed si es intencional.
-    // Para simplificar: Pagos completos = completed. Pagos incompletos = pending (a menos que ya estuviera cancelled, pero por ahora forzaremos pending para simplificar el flujo activo).
-
     let newStatus = gameData.status;
     if (isPaidTeamA && isPaidTeamB) {
         newStatus = 'completed';
     } else if (newStatus === 'completed' && (!isPaidTeamA || !isPaidTeamB)) {
-        // Si estaba completado y desmarcamos uno, vuelve a pendiente
         newStatus = 'pending';
     }
 
@@ -211,13 +214,9 @@ export async function updateGamePaymentStatus(
         updatedAt: Timestamp.now(),
     };
 
-    // Si se paga y hay referencia, guardarla. Si se despaga, podríamos borrarla o mantenerla como historial. 
-    // Asumiremos que si se marca como NO pagado, se quiere limpiar la referencia, 
-    // o si el usuario simplemente cambia el estado.
     if (isPaid && paymentReference !== undefined) {
         updateData[`paymentRefTeam${team}`] = paymentReference;
     } else if (!isPaid) {
-        // Opción: Limpiar referencia si se marca como no pagado
         updateData[`paymentRefTeam${team}`] = deleteField();
     }
 

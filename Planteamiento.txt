@@ -14,72 +14,63 @@ control de usuarios y una experiencia de usuario (UX) de alto nivel con animacio
 FUNCIONALIDADES IMPLEMENTADAS Y ACTIVAS
 ================================================================================
 
-1. AUTENTICACIÓN Y SEGURIDAD (¡NUEVO!)
-   - Login seguro con correo y contraseña (Firebase Auth).
-   - Registro de nuevos usuarios.
-   - Protección de rutas (Middleware / AuthGuard).
-   - Persistencia de sesión.
+1. AUTENTICACIÓN Y ROLES (¡ACTUALIZADO!)
+   - Acceso Público/Anónimo: Los usuarios pueden registrar juegos sin crear cuenta (Guest Mode).
+   - Acceso Admin: Botón "Acceder como Admin" para gestión avanzada.
+   - Seguridad: Los datos de invitados están aislados por dispositivo/instalación.
+   - Roles: 'admin', 'user' (registrado) y 'user' (anónimo).
 
-2. MÓDULO DE JUEGOS (Refactorizado)
-   - Separación de responsabilidades:
-     a) Cargar Juego (`/juegos/cargar`): Formulario dedicado con animaciones.
-     b) Lista de Juegos (`/juegos`): Visualización con filtros y acciones.
-   - Selectores Premium: 
-     - Selector de Categoría personalizado.
-     - Selector de Estatus personalizado.
-     - Selector de Hora estilo "rueda" (iOS/Android) con accesos rápidos.
-   - Animaciones fluidas (`framer-motion`) en listas y formularios.
+2. GESTIÓN DE CANCHAS (¡NUEVO!)
+   - Flujo de inicio: Selección obligatoria de cancha.
+   - Creación rápida de canchas nuevas.
+   - Contexto global de cancha seleccionada.
 
-3. GESTIÓN DE PAGOS Y REFERENCIAS (¡NUEVO!)
-   - Control de pago individual por equipo (Check visual).
-   - Registro de Referencia de Pago (opcional al marcar como pagado).
-   - Automatización de Estatus: El juego pasa a "Completado" automáticamente 
-     si ambos equipos pagan.
-   - Feedback visual inmediato (Toasts y SweetAlert2).
+3. MÓDULO DE JUEGOS (Refactorizado)
+   - Separación por Cancha: Los datos son exclusivos de cada ubicación.
+   - Visibilidad:
+     a) Usuario Estándar: Ve SOLO sus propios juegos del día.
+     b) Administrador: Ve TODOS los juegos de la cancha seleccionada.
+   - Limpieza Automática: Eliminación de juegos > 5 días (Trigger Admin).
 
-4. MÓDULO DE CATEGORÍAS
-   - CRUD completo de categorías.
-   - Definición de precios por equipo.
+4. GESTIÓN DE PAGOS Y REFERENCIAS
+   - Control de pago individual por equipo.
+   - Referencias de pago.
+   - Automatización de estatus completado.
 
-5. INTERFAZ "PREMIUM DARK"
-   - Diseño glassmorphism consistente en toda la app.
-   - Modo oscuro permanente (eliminado el theme toggle por consistencia).
-   - Componentes personalizados (Botones, Inputs, Cards, Badges).
-   - Indicador de Tasa BCV en Sidebar.
+5. MÓDULO DE CATEGORÍAS (Global)
+   - Acceso de escritura exclusivo para Administradores.
+   - Lectura global para todos los usuarios.
 
 ================================================================================
 ESTRUCTURA DE DATOS (ACTUALIZADA)
 ================================================================================
 
-Colección: "games"
+Colección: "users"
 {
-  id: string,
-  date: timestamp,
-  time: string ("HH:mm"),
-  categoryId: string,
-  teamA: string,
-  teamB: string,
-  totalCost: number,
-  status: string ("pending" | "completed" | "cancelled"),
-  
-  // Control de Pagos (¡NUEVO!)
-  isPaidTeamA: boolean (default: false),
-  isPaidTeamB: boolean (default: false),
-  paymentRefTeamA: string (opcional),
-  paymentRefTeamB: string (opcional),
-  
-  createdAt: timestamp,
-  userId: string (owner)
+  uid: string,
+  email: string,
+  displayName: string,
+  role: 'admin' | 'user',
+  createdAt: timestamp
 }
 
-Colección: "categories"
+Colección: "courts"
 {
   id: string,
   name: string,
-  pricePerTeam: number,
-  userId: string (owner),
   createdAt: timestamp
 }
+
+Colección: "games"
+{
+  id: string,
+  courtId: string,     // Vinculación a cancha
+  courtName: string,
+  date: timestamp,
+  // ... campos previos ...
+  ownerId: string
+}
+
 
 ================================================================================
 STACK TECNOLÓGICO (ACTUALIZADO)

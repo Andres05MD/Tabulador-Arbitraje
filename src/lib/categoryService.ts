@@ -15,20 +15,15 @@ import type { Category } from '@/src/types';
 
 const COLLECTION_NAME = 'categories';
 
-// Obtener categorías por ownerId (snapshot en tiempo real)
+// Obtener todas las categorías (snapshot en tiempo real)
 export function subscribeToCategories(
-    ownerId: string,
+    _ownerId: string | null, // Deprecated/Ignored but kept for signature
     callback: (categories: Category[]) => void,
     onError?: (error: any) => void
 ) {
-    if (!ownerId) {
-        callback([]);
-        return () => { };
-    }
-
     const q = query(
-        collection(db, COLLECTION_NAME),
-        where('ownerId', '==', ownerId)
+        collection(db, COLLECTION_NAME)
+        // Global categories: No owner filter
     );
 
     return onSnapshot(
@@ -39,7 +34,7 @@ export function subscribeToCategories(
                 ...doc.data(),
             } as Category));
 
-            // Ordenar en cliente para evitar requerir índice compuesto
+            // Ordenar en cliente
             categories.sort((a, b) => a.name.localeCompare(b.name));
 
             callback(categories);
@@ -53,13 +48,10 @@ export function subscribeToCategories(
     );
 }
 
-// Obtener todas las categorías de un usuario (una sola vez)
-export async function getCategories(ownerId: string): Promise<Category[]> {
-    if (!ownerId) return [];
-
+// Obtener todas las categorías
+export async function getCategories(_ownerId?: string): Promise<Category[]> {
     const q = query(
-        collection(db, COLLECTION_NAME),
-        where('ownerId', '==', ownerId)
+        collection(db, COLLECTION_NAME)
     );
     const snapshot = await getDocs(q);
 
@@ -70,6 +62,8 @@ export async function getCategories(ownerId: string): Promise<Category[]> {
 
     return categories.sort((a, b) => a.name.localeCompare(b.name));
 }
+
+
 
 // Crear nueva categoría
 export async function createCategory(data: {

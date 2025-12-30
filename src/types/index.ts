@@ -9,6 +9,20 @@ export interface Category {
     updatedAt: Timestamp;
 }
 
+export interface UserProfile {
+    uid: string;
+    email: string;
+    displayName: string;
+    role: 'admin' | 'user';
+    createdAt: Timestamp;
+}
+
+export interface Court {
+    id: string;
+    name: string;
+    createdAt: Timestamp;
+}
+
 export interface Game {
     id: string;
     date: Timestamp;
@@ -23,6 +37,11 @@ export interface Game {
     isPaidTeamB?: boolean;
     paymentRefTeamA?: string;
     paymentRefTeamB?: string;
+
+    // New fields
+    courtId: string;
+    courtName: string;
+
     ownerId?: string;
     createdAt: Timestamp;
     updatedAt: Timestamp;

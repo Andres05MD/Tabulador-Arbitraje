@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   keywords: ["voleybol", "arbitraje", "tabulador", "gestión deportiva"],
 };
 
+import { CourtProvider } from "@/src/components/CourtProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,9 +28,11 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased min-h-screen selection:bg-primary-500 selection:text-white`}>
         <ThemeProvider>
           <AuthProvider>
-            <MainLayout>
-              {children}
-            </MainLayout>
+            <CourtProvider>
+              <MainLayout>
+                {children}
+              </MainLayout>
+            </CourtProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

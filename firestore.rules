@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función auxiliar para verificar si es admin
+    // Verifica si el documento del usuario existe y si el campo 'role' es 'admin'
+    function isAdmin() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // --- REGLAS DE USUARIOS ---
+    match /users/{userId} {
+      // Cada usuario lee su propio perfil. Admin lee todos.
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      // Usuario crea/edita su propio perfil al registrarse
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // --- REGLAS DE CATEGORÍAS ---
+    match /categories/{categoryId} {
+      // Lectura pública para cualquier usuario autenticado (incluido anónimo)
+      allow read: if request.auth != null;
+      // Solo admin puede crear/editar/borrar categorías
+      allow write: if isAdmin();
+    }
+
+    // --- REGLAS DE CANCHAS (COURTS) ---
+    match /courts/{courtId} {
+      // Lectura pública
+      allow read: if request.auth != null;
+      // Permitimos crear canchas a cualquier usuario autenticado (para el flujo inicial)
+      // Edición/Eliminación restringida a Admin o Creador si implementáramos ownerId en courts
+      allow create: if request.auth != null;
+      allow update, delete: if isAdmin();
+    }
+
+    // --- REGLAS DE JUEGOS ---
+    match /games/{gameId} {
+      // LECTURA:
+      // 1. El dueño del juego (quien lo creó) puede leerlo.
+      // 2. El Administrador puede leer todos.
+      allow read: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid || isAdmin()
+      );
+      
+      // CREACIÓN:
+      // Debe asignar el ownerId a sí mismo
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+      
+      // EDICIÓN/ELIMINACIÓN:
+      // Dueño o Admin
+      allow update, delete: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid || isAdmin()
+      );
+    }
+  }
+}
