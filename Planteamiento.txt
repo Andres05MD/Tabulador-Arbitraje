@@ -131,7 +131,8 @@ FASE 4 - PAGOS Y LOGICA DE NEGOCIO [COMPLETADO]
 [x] Cambio automático de estatus a "Completado"
 [x] Librería de Selects personalizada (`SelectField`)
 
-FASE 5 - REFINAMIENTO UX [EN PROGRESO]
+FASE 5 - REFINAMIENTO UX Y CALIDAD DE CÓDIGO [EN PROGRESO]
+[x] Refactorización de formularios de Autenticación (Login/Register) con Zod y React Hook Form
 [x] Estandarización de inputs (Selects, Text, Date)
 [ ] Tooltips para referencias de pago
 [ ] Exportación de reportes (PDF/Excel)
