@@ -48,7 +48,7 @@ export default function SelectField<T extends SelectOption>({
                     {label}
                 </label>
             )}
-            <Listbox value={value} onChange={onChange} disabled={disabled}>
+            <Listbox value={value || undefined} onChange={onChange} disabled={disabled}>
                 {({ open }) => (
                     <div className="relative mt-1">
                         <Listbox.Button className={cn(

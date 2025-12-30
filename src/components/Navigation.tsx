@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
-import ThemeToggle from './ThemeToggle';
+
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { logoutUser } from '@/src/lib/authService';
@@ -140,7 +140,7 @@ export default function Navigation() {
                             </>
                         )}
 
-                        <ThemeToggle />
+
 
                         {/* Mobile Menu Button */}
                         <button
