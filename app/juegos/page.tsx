@@ -337,10 +337,10 @@ export default function JuegosPage() {
 
     return (
         <div className="page-container">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="page-title mb-0">Juegos del Día</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+                <h1 className="page-title mb-0 text-center sm:text-left w-full sm:w-auto">Juegos del Día</h1>
                 {!showEditForm && (
-                    <Link href="/juegos/cargar" className="btn-primary">
+                    <Link href="/juegos/cargar" className="btn-primary w-full sm:w-auto justify-center">
                         <svg className="w-5 h-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
@@ -476,45 +476,50 @@ export default function JuegosPage() {
                                                         )}
                                                     </div>
 
-                                                    <div className="flex items-center gap-6 mb-2">
+                                                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6 mb-4 sm:mb-2 w-full sm:w-auto">
                                                         {/* Equipo A */}
-                                                        <div className="flex items-center gap-3">
-                                                            <MotionButton
-                                                                onClick={() => handlePaymentToggle(game, 'A')}
-                                                                title={game.isPaidTeamA ? "Marcado como PAGADO" : "Marcar como PAGADO"}
-                                                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${game.isPaidTeamA
-                                                                    ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
-                                                                    : 'bg-slate-800 text-slate-500 border border-slate-600 hover:border-slate-400'
-                                                                    }`}
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                                </svg>
-                                                            </MotionButton>
-                                                            <span className={`text-xl font-bold ${game.isPaidTeamA ? 'text-green-400' : 'text-white'}`}>
-                                                                {game.teamA}
-                                                            </span>
+                                                        <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-3">
+                                                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                                                <MotionButton
+                                                                    onClick={() => handlePaymentToggle(game, 'A')}
+                                                                    title={game.isPaidTeamA ? "Marcado como PAGADO" : "Marcar como PAGADO"}
+                                                                    className={`w-10 h-10 sm:w-8 sm:h-8 rounded-full flex-shrink-0 flex items-center justify-center transition-all ${game.isPaidTeamA
+                                                                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                                                                        : 'bg-slate-800 text-slate-500 border border-slate-600 hover:border-slate-400'
+                                                                        }`}
+                                                                >
+                                                                    <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                                    </svg>
+                                                                </MotionButton>
+                                                                <span className={`text-lg sm:text-xl font-bold truncate ${game.isPaidTeamA ? 'text-green-400' : 'text-white'}`}>
+                                                                    {game.teamA}
+                                                                </span>
+                                                            </div>
                                                         </div>
 
-                                                        <span className="text-slate-600 font-light text-2xl">/</span>
+                                                        <span className="text-slate-600 font-light text-lg sm:text-2xl hidden sm:block">/</span>
+                                                        <span className="text-slate-600 font-light text-xs uppercase tracking-widest sm:hidden py-1">vs</span>
 
                                                         {/* Equipo B */}
-                                                        <div className="flex items-center gap-3">
-                                                            <span className={`text-xl font-bold ${game.isPaidTeamB ? 'text-green-400' : 'text-white'}`}>
-                                                                {game.teamB}
-                                                            </span>
-                                                            <MotionButton
-                                                                onClick={() => handlePaymentToggle(game, 'B')}
-                                                                title={game.isPaidTeamB ? "Marcado como PAGADO" : "Marcar como PAGADO"}
-                                                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${game.isPaidTeamB
-                                                                    ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
-                                                                    : 'bg-slate-800 text-slate-500 border border-slate-600 hover:border-slate-400'
-                                                                    }`}
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                                </svg>
-                                                            </MotionButton>
+                                                        <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-3">
+                                                            <div className="flex items-center gap-3 w-full sm:w-auto flex-row-reverse sm:flex-row">
+                                                                <span className={`text-lg sm:text-xl font-bold truncate text-right sm:text-left ${game.isPaidTeamB ? 'text-green-400' : 'text-white'}`}>
+                                                                    {game.teamB}
+                                                                </span>
+                                                                <MotionButton
+                                                                    onClick={() => handlePaymentToggle(game, 'B')}
+                                                                    title={game.isPaidTeamB ? "Marcado como PAGADO" : "Marcar como PAGADO"}
+                                                                    className={`w-10 h-10 sm:w-8 sm:h-8 rounded-full flex-shrink-0 flex items-center justify-center transition-all ${game.isPaidTeamB
+                                                                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                                                                        : 'bg-slate-800 text-slate-500 border border-slate-600 hover:border-slate-400'
+                                                                        }`}
+                                                                >
+                                                                    <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                                    </svg>
+                                                                </MotionButton>
+                                                            </div>
                                                         </div>
                                                     </div>
 

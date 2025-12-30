@@ -197,10 +197,10 @@ export default function CategoriasPage() {
 
     return (
         <div className="page-container">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="page-title mb-0">Gestión de Categorías</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+                <h1 className="page-title mb-0 text-center sm:text-left w-full sm:w-auto">Gestión de Categorías</h1>
                 {!showForm && (
-                    <button onClick={handleCreate} className="btn-primary">
+                    <button onClick={handleCreate} className="btn-primary w-full sm:w-auto justify-center">
                         <svg className="w-5 h-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
