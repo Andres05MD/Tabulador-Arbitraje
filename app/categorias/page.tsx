@@ -197,7 +197,7 @@ export default function CategoriasPage() {
 
     return (
         <div className="page-container">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4 mt-10 sm:mt-0">
                 <h1 className="page-title mb-0 text-center sm:text-left w-full sm:w-auto">Gestión de Categorías</h1>
                 {!showForm && (
                     <button onClick={handleCreate} className="btn-primary w-full sm:w-auto justify-center">

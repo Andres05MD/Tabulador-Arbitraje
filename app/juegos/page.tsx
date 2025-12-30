@@ -337,7 +337,7 @@ export default function JuegosPage() {
 
     return (
         <div className="page-container">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4 mt-10 sm:mt-0">
                 <h1 className="page-title mb-0 text-center sm:text-left w-full sm:w-auto">Juegos del Día</h1>
                 {!showEditForm && (
                     <Link href="/juegos/cargar" className="btn-primary w-full sm:w-auto justify-center">
@@ -444,103 +444,148 @@ export default function JuegosPage() {
                                         <GlassCard
                                             key={game.id}
                                             layout
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -20 }}
-                                            className="p-5 relative overflow-hidden group"
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.95 }}
+                                            className="relative overflow-hidden group p-0"
                                         >
-                                            {/* Indicador lateral de estado del juego */}
-                                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300 ${gameStatus === 'completed' ? 'bg-green-500' :
-                                                gameStatus === 'cancelled' ? 'bg-red-500' : 'bg-primary-500'
-                                                }`}></div>
+                                            <div className="flex flex-col md:flex-row">
+                                                {/* Estado Lateral Izquierdo */}
+                                                <div className={`md:w-1.5 h-1.5 md:h-auto w-full transition-colors duration-300 ${gameStatus === 'completed' ? 'bg-emerald-500' :
+                                                    gameStatus === 'cancelled' ? 'bg-red-500' : 'bg-blue-500'
+                                                    }`} />
 
-                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pl-3">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-3 mb-3 flex-wrap">
-                                                        <span className="px-3 py-1 text-xs font-bold uppercase bg-primary-500/10 text-primary-400 border border-primary-500/20 rounded-full tracking-wide">
-                                                            {game.categoryName}
-                                                        </span>
-                                                        <span className="text-sm font-medium text-slate-400">
-                                                            {format(game.date.toDate(), "d 'de' MMMM", { locale: es })}
-                                                            {game.time && ` • ${game.time}`}
-                                                        </span>
-                                                        {gameStatus !== 'pending' && (
-                                                            <span
-                                                                className={`px-2 py-0.5 text-xs font-bold uppercase rounded border ${gameStatus === 'completed'
-                                                                    ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                                                                    : 'bg-red-500/10 text-red-400 border-red-500/20'
-                                                                    }`}
-                                                            >
-                                                                {gameStatus === 'completed' ? 'Completado' : 'Cancelado'}
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6 mb-4 sm:mb-2 w-full sm:w-auto">
-                                                        {/* Equipo A */}
-                                                        <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-3">
-                                                            <div className="flex items-center gap-3 w-full sm:w-auto">
-                                                                <MotionButton
-                                                                    onClick={() => handlePaymentToggle(game, 'A')}
-                                                                    title={game.isPaidTeamA ? "Marcado como PAGADO" : "Marcar como PAGADO"}
-                                                                    className={`w-10 h-10 sm:w-8 sm:h-8 rounded-full flex-shrink-0 flex items-center justify-center transition-all ${game.isPaidTeamA
-                                                                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
-                                                                        : 'bg-slate-800 text-slate-500 border border-slate-600 hover:border-slate-400'
-                                                                        }`}
-                                                                >
-                                                                    <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                                    </svg>
-                                                                </MotionButton>
-                                                                <span className={`text-lg sm:text-xl font-bold truncate ${game.isPaidTeamA ? 'text-green-400' : 'text-white'}`}>
-                                                                    {game.teamA}
-                                                                </span>
-                                                            </div>
+                                                <div className="flex-1 p-5">
+                                                    {/* Cabecera de la Tarjeta: Fecha, Hora y Chips */}
+                                                    <div className="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-700/50">
+                                                        <div className="flex items-center gap-2 text-sm text-slate-400">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                            </svg>
+                                                            <span className="font-medium">{format(game.date.toDate(), "d 'de' MMMM", { locale: es })}</span>
+                                                            {game.time && (
+                                                                <>
+                                                                    <span className="text-slate-600">•</span>
+                                                                    <span className="font-semibold text-slate-200 bg-slate-800 px-2 py-0.5 rounded text-xs">{game.time}</span>
+                                                                </>
+                                                            )}
                                                         </div>
 
-                                                        <span className="text-slate-600 font-light text-lg sm:text-2xl hidden sm:block">/</span>
-                                                        <span className="text-slate-600 font-light text-xs uppercase tracking-widest sm:hidden py-1">vs</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="px-2.5 py-0.5 text-[10px] font-bold uppercase bg-slate-800 text-slate-300 border border-slate-600 rounded-full tracking-wider">
+                                                                {game.categoryName}
+                                                            </span>
+                                                            {gameStatus !== 'pending' && (
+                                                                <span className={`px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full border tracking-wider ${gameStatus === 'completed'
+                                                                    ? 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30'
+                                                                    : 'bg-red-950/30 text-red-400 border-red-500/30'
+                                                                    }`}>
+                                                                    {gameStatus === 'completed' ? 'COMPLETADO' : 'CANCELADO'}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Cuerpo del Enfrentamiento */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                                                        {/* Equipo A */}
+                                                        <div className="bg-slate-800/30 rounded-xl p-3 border border-slate-700/30">
+                                                            <div className="flex justify-between items-center mb-2">
+                                                                <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Local</span>
+                                                                {game.isPaidTeamA && (
+                                                                    <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/30 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                        </svg>
+                                                                        PAGADO
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center justify-between gap-3">
+                                                                <span className={`text-lg font-bold truncate ${game.isPaidTeamA ? 'text-white' : 'text-slate-300'}`}>
+                                                                    {game.teamA}
+                                                                </span>
+                                                                <MotionButton
+                                                                    onClick={() => handlePaymentToggle(game, 'A')}
+                                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${game.isPaidTeamA
+                                                                        ? 'bg-slate-800 text-emerald-500 border-emerald-900 hover:bg-emerald-950'
+                                                                        : 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-lg shadow-blue-500/20'
+                                                                        }`}
+                                                                >
+                                                                    {game.isPaidTeamA ? 'REVERTIR' : 'PAGAR'}
+                                                                </MotionButton>
+                                                            </div>
+                                                            {game.paymentRefTeamA && (
+                                                                <div className="mt-2 text-[10px] text-slate-500 font-mono bg-slate-900/50 px-2 py-1 rounded w-fit">
+                                                                    REF: {game.paymentRefTeamA}
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Separador VS Movil */}
+                                                        <div className="flex items-center justify-center md:hidden -my-3 z-10">
+                                                            <span className="bg-slate-800 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-full border border-slate-700">VS</span>
+                                                        </div>
 
                                                         {/* Equipo B */}
-                                                        <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-3">
-                                                            <div className="flex items-center gap-3 w-full sm:w-auto flex-row-reverse sm:flex-row">
-                                                                <span className={`text-lg sm:text-xl font-bold truncate text-right sm:text-left ${game.isPaidTeamB ? 'text-green-400' : 'text-white'}`}>
+                                                        <div className="bg-slate-800/30 rounded-xl p-3 border border-slate-700/30">
+                                                            <div className="flex justify-between items-center mb-2">
+                                                                <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Visitante</span>
+                                                                {game.isPaidTeamB && (
+                                                                    <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/30 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                        </svg>
+                                                                        PAGADO
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center justify-between gap-3">
+                                                                <span className={`text-lg font-bold truncate ${game.isPaidTeamB ? 'text-white' : 'text-slate-300'}`}>
                                                                     {game.teamB}
                                                                 </span>
                                                                 <MotionButton
                                                                     onClick={() => handlePaymentToggle(game, 'B')}
-                                                                    title={game.isPaidTeamB ? "Marcado como PAGADO" : "Marcar como PAGADO"}
-                                                                    className={`w-10 h-10 sm:w-8 sm:h-8 rounded-full flex-shrink-0 flex items-center justify-center transition-all ${game.isPaidTeamB
-                                                                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
-                                                                        : 'bg-slate-800 text-slate-500 border border-slate-600 hover:border-slate-400'
+                                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${game.isPaidTeamB
+                                                                        ? 'bg-slate-800 text-emerald-500 border-emerald-900 hover:bg-emerald-950'
+                                                                        : 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-lg shadow-blue-500/20'
                                                                         }`}
                                                                 >
-                                                                    <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                                    </svg>
+                                                                    {game.isPaidTeamB ? 'REVERTIR' : 'PAGAR'}
                                                                 </MotionButton>
                                                             </div>
+                                                            {game.paymentRefTeamB && (
+                                                                <div className="mt-2 text-[10px] text-slate-500 font-mono bg-slate-900/50 px-2 py-1 rounded w-fit">
+                                                                    REF: {game.paymentRefTeamB}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
-
-                                                    {/* Referencias en vista de lista */}
-                                                    {(game.paymentRefTeamA || game.paymentRefTeamB) && (
-                                                        <div className="flex gap-3 mt-1 ml-11">
-                                                            {game.paymentRefTeamA && <span className="text-[10px] text-slate-500">Ref A: {game.paymentRefTeamA}</span>}
-                                                            {game.paymentRefTeamB && <span className="text-[10px] text-slate-500">Ref B: {game.paymentRefTeamB}</span>}
-                                                        </div>
-                                                    )}
                                                 </div>
 
-                                                <button
-                                                    onClick={() => handleDelete(game)}
-                                                    className="p-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                                                    title="Eliminar"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
+                                                {/* Acciones */}
+                                                <div className="flex md:flex-col border-t md:border-t-0 md:border-l border-slate-700/50 divide-x md:divide-x-0 md:divide-y divide-slate-700/50 bg-slate-900/50">
+                                                    <button
+                                                        onClick={() => handleEdit(game)}
+                                                        className="flex-1 md:flex-none p-4 md:p-3 text-slate-400 hover:text-blue-400 hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                                                        title="Editar"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                        <span className="md:hidden text-xs font-bold">Editar</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(game)}
+                                                        className="flex-1 md:flex-none p-4 md:p-3 text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                                                        title="Eliminar"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                        <span className="md:hidden text-xs font-bold">Eliminar</span>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </GlassCard>
                                     );
