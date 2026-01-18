@@ -1,5 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
+export type UserRole = 'admin' | 'coordinador' | 'user';
+
 export interface Category {
     id: string;
     name: string;
@@ -13,7 +15,7 @@ export interface UserProfile {
     uid: string;
     email: string;
     displayName: string;
-    role: 'admin' | 'user';
+    role: UserRole;
     createdAt: Timestamp;
 }
 
@@ -21,6 +23,7 @@ export interface Court {
     id: string;
     name: string;
     createdAt: Timestamp;
+    updatedAt?: Timestamp;
 }
 
 export interface Game {
@@ -32,17 +35,22 @@ export interface Game {
     teamA: string;
     teamB: string;
     totalCost: number;
-    status?: 'pending' | 'completed' | 'cancelled';
+    status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+
+    // Payment status
     isPaidTeamA?: boolean;
     isPaidTeamB?: boolean;
     paymentRefTeamA?: string;
     paymentRefTeamB?: string;
 
-    // New fields
+    // Location info
     courtId: string;
     courtName: string;
 
-    ownerId?: string;
+    // Referee/Admin info
+    ownerId?: string; // Creator ID
+    refereeName?: string; // For public referee access
+
     createdAt: Timestamp;
     updatedAt: Timestamp;
 }
@@ -59,3 +67,4 @@ export interface GameFormData {
     teamA: string;
     teamB: string;
 }
+

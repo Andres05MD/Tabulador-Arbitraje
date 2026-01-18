@@ -1,6 +1,6 @@
 'use client';
 
-import type { Category } from '@/src/types';
+import type { Category } from '@/types';
 import SelectField from './SelectField';
 
 export type ViewMode = 'calendar' | 'teams';

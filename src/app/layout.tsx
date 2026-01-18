@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/src/components/ThemeProvider";
-import { AuthProvider } from "@/src/components/AuthProvider";
-import MainLayout from "@/src/components/MainLayout";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthProvider } from "@/components/AuthProvider";
+import MainLayout from "@/components/MainLayout";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   keywords: ["voleybol", "arbitraje", "tabulador", "gestión deportiva"],
 };
 
-import { CourtProvider } from "@/src/components/CourtProvider";
+import { CourtProvider } from "@/components/CourtProvider";
 
 export default function RootLayout({
   children,

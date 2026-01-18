@@ -20,6 +20,7 @@ export const gameSchema = z.object({
     date: z.date(),
     time: z.string().optional(),
     categoryId: z.string().min(1, 'Debes seleccionar una categoría'),
+    courtId: z.string().min(1, 'Debes seleccionar una cancha'),
     teamA: z
         .string()
         .min(1, 'El nombre del Equipo A es requerido')

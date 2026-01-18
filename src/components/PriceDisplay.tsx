@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useDollarRate } from '@/src/hooks/useDollarRate';
+import { useDollarRate } from '@/hooks/useDollarRate';
 
 interface PriceDisplayProps {
     usdAmount: number;

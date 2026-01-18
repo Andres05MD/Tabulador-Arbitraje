@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Swal from 'sweetalert2';
-import { loginSchema, type LoginFormData } from '@/src/lib/validations';
-import { loginUser } from '@/src/lib/authService';
+import { loginSchema, type LoginFormData } from '@/lib/validations';
+import { loginUser } from '@/lib/authService';
 import { motion } from 'framer-motion';
-import { MotionDiv, MotionButton, fadeIn, staggerContainer } from '@/src/components/ui/motion';
+import { MotionDiv, MotionButton, fadeIn, staggerContainer } from '@/components/ui/motion';
 
 export default function LoginPage() {
     const router = useRouter();

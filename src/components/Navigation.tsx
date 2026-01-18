@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
-import { logoutUser } from '@/src/lib/authService';
+import { logoutUser } from '@/lib/authService';
 
 export default function Navigation() {
     const pathname = usePathname();

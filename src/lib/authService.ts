@@ -8,10 +8,30 @@ import {
     updateProfile,
     signInAnonymously,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, Timestamp, getDocs, collection, query, updateDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
-import type { UserProfile } from '@/src/types';
+import type { UserProfile } from '@/types';
 
+// Obtener todos los usuarios (Solo para admins)
+export async function getAllUsers(): Promise<UserProfile[]> {
+    try {
+        const q = query(collection(db, 'users'));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => doc.data() as UserProfile);
+    } catch (error) {
+        console.error('Error fetching all users:', error);
+        return [];
+    }
+}
+
+// Actualizar rol de usuario
+export async function updateUserRole(uid: string, newRole: UserRole): Promise<void> {
+    const userRef = doc(db, 'users', uid);
+    await updateDoc(userRef, {
+        role: newRole,
+        updatedAt: Timestamp.now()
+    });
+}
 // Registrar nuevo usuario
 export async function registerUser(email: string, password: string, displayName: string) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -35,8 +55,10 @@ export async function registerUser(email: string, password: string, displayName:
     return userCredential.user;
 }
 
+import type { UserRole } from '@/types';
+
 // Obtener rol del usuario
-export async function getUserRole(uid: string): Promise<'admin' | 'user' | null> {
+export async function getUserRole(uid: string): Promise<UserRole | null> {
     try {
         const userDoc = await getDoc(doc(db, 'users', uid));
         if (userDoc.exists()) {

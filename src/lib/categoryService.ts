@@ -11,7 +11,7 @@ import {
     onSnapshot,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Category } from '@/src/types';
+import type { Category } from '@/types';
 
 const COLLECTION_NAME = 'categories';
 

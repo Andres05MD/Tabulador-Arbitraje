@@ -1,8 +1,9 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import type { Court } from '@/src/types';
+import type { Court } from '@/types';
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from './AuthProvider';
 
 interface CourtContextType {
     selectedCourt: Court | null;
@@ -18,11 +19,12 @@ const CourtContext = createContext<CourtContextType>({
     loading: true,
 });
 
-const PUBLIC_ROUTES = ['/login', '/register', '/seleccionar-cancha'];
+const PUBLIC_ROUTES = ['/login', '/register', '/seleccionar-cancha', '/usuarios'];
 
 export function CourtProvider({ children }: { children: React.ReactNode }) {
     const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
     const [loading, setLoading] = useState(true);
+    const { role } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
 
@@ -55,11 +57,15 @@ export function CourtProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!loading) {
             // Si no hay cancha seleccionada y no estamos en una ruta pública, redirigir
-            if (!selectedCourt && !PUBLIC_ROUTES.includes(pathname)) {
+            // Modificado para permitir rutas de acceso público tipo /arbitro
+            const isPublic = PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/arbitro');
+            const canSkipSelection = role === 'admin' || role === 'coordinador';
+
+            if (!selectedCourt && !isPublic && !canSkipSelection) {
                 router.push('/seleccionar-cancha');
             }
         }
-    }, [selectedCourt, loading, pathname, router]);
+    }, [selectedCourt, loading, pathname, router, role]);
 
     return (
         <CourtContext.Provider value={{ selectedCourt, selectCourt, clearCourt, loading }}>

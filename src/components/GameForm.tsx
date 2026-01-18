@@ -2,24 +2,27 @@
 
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { gameSchema, type GameFormData } from '@/src/lib/validations';
-import type { Game, Category } from '@/src/types';
+import { gameSchema, type GameFormData } from '@/lib/validations';
+import type { Game, Category, Court } from '@/types';
 import PriceDisplay from './PriceDisplay';
 import DatePickerField from './DatePickerField';
 import TimePickerField from './TimePickerField';
 import SelectField from './SelectField';
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MotionDiv, MotionButton, fadeIn, staggerContainer } from '@/src/components/ui/motion';
+import { MotionDiv, MotionButton, fadeIn, staggerContainer } from '@/components/ui/motion';
+import { useCourt } from './CourtProvider';
 
 interface GameFormProps {
     game?: Game;
     categories: Category[];
+    courts: Court[];
     onSubmit: (data: GameFormData) => Promise<void>;
     onCancel: () => void;
 }
 
-export default function GameForm({ game, categories, onSubmit, onCancel }: GameFormProps) {
+export default function GameForm({ game, categories, courts, onSubmit, onCancel }: GameFormProps) {
+    const { selectedCourt } = useCourt();
     const {
         register,
         handleSubmit,
@@ -30,16 +33,18 @@ export default function GameForm({ game, categories, onSubmit, onCancel }: GameF
         resolver: zodResolver(gameSchema),
         defaultValues: game
             ? {
-                date: game.date.toDate(),
+                date: game.date instanceof Date ? game.date : (game.date as any).toDate(),
                 time: game.time || '',
                 categoryId: game.categoryId,
+                courtId: game.courtId,
                 teamA: game.teamA,
                 teamB: game.teamB,
             }
             : {
-                date: new Date(),
+                date: undefined as any,
                 time: '',
                 categoryId: '',
+                courtId: selectedCourt?.id || '',
                 teamA: '',
                 teamB: '',
             },
@@ -74,8 +79,8 @@ export default function GameForm({ game, categories, onSubmit, onCancel }: GameF
                             <DatePickerField
                                 id="date"
                                 selected={field.value instanceof Date ? field.value : null}
-                                onChange={(date) => field.onChange(date || new Date())}
-                                placeholderText="Selecciona la fecha del juego"
+                                onChange={(date) => field.onChange(date)}
+                                placeholderText="DD/MM/AAAA"
                                 minDate={new Date(new Date().setDate(new Date().getDate() - 30))}
                                 maxDate={new Date(new Date().setDate(new Date().getDate() + 90))}
                                 disabled={isSubmitting}
@@ -127,6 +132,33 @@ export default function GameForm({ game, categories, onSubmit, onCancel }: GameF
                                     <span className="font-medium">{category.name}</span>
                                     <span className="text-gray-500 dark:text-gray-400 text-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full ml-2">
                                         ${category.pricePerTeam}
+                                    </span>
+                                </div>
+                            )}
+                        />
+                    )}
+                />
+            </MotionDiv>
+
+            {/* Cancha */}
+            <MotionDiv variants={fadeIn}>
+                <Controller
+                    name="courtId"
+                    control={control}
+                    render={({ field }) => (
+                        <SelectField
+                            label="Cancha *"
+                            value={courts.find((c) => c.id === field.value) || null}
+                            onChange={(selected) => field.onChange(selected.id)}
+                            options={courts}
+                            placeholder="Selecciona una cancha..."
+                            disabled={isSubmitting}
+                            error={errors.courtId?.message}
+                            renderOption={(court) => (
+                                <div className="flex justify-between w-full items-center">
+                                    <span className="font-medium">{court.name}</span>
+                                    <span className="text-gray-500 dark:text-gray-400 text-[10px] uppercase font-bold tracking-wider">
+                                        Ubicación
                                     </span>
                                 </div>
                             )}

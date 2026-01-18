@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
-import type { Game, Category } from '@/src/types';
+import type { Game, Category, Court } from '@/types';
 import {
     subscribeToGames,
     updateGame,
@@ -13,18 +13,19 @@ import {
     updateGameStatus,
     updateGamePaymentStatus,
     deleteOldGames,
-} from '@/src/lib/gameService';
-import { subscribeToCategories } from '@/src/lib/categoryService';
-import GameForm from '@/src/components/GameForm';
-import PriceDisplay from '@/src/components/PriceDisplay';
-import FirebasePermissionsError from '@/src/components/FirebasePermissionsError';
-import GamesFilters, { type ViewMode, type GameStatus } from '@/src/components/GamesFilters';
-import TeamsView from '@/src/components/TeamsView';
-import type { GameFormData } from '@/src/lib/validations';
+} from '@/lib/gameService';
+import { subscribeToCategories } from '@/lib/categoryService';
+import { subscribeToCourts } from '@/lib/courtService';
+import GameForm from '@/components/GameForm';
+import PriceDisplay from '@/components/PriceDisplay';
+import FirebasePermissionsError from '@/components/FirebasePermissionsError';
+import GamesFilters, { type ViewMode, type GameStatus } from '@/components/GamesFilters';
+import TeamsView from '@/components/TeamsView';
+import type { GameFormData } from '@/lib/validations';
 
-import { useAuth } from '@/src/components/AuthProvider';
-import { useCourt } from '@/src/components/CourtProvider';
-import { MotionDiv, staggerContainer, GlassCard, MotionButton } from '@/src/components/ui/motion';
+import { useAuth } from '@/components/AuthProvider';
+import { useCourt } from '@/components/CourtProvider';
+import { MotionDiv, staggerContainer, GlassCard, MotionButton } from '@/components/ui/motion';
 import { AnimatePresence } from 'framer-motion';
 
 export default function JuegosPage() {
@@ -32,6 +33,7 @@ export default function JuegosPage() {
     const { selectedCourt } = useCourt();
     const [games, setGames] = useState<Game[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
+    const [courts, setCourts] = useState<Court[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showEditForm, setShowEditForm] = useState(false);
@@ -44,7 +46,7 @@ export default function JuegosPage() {
     const [selectedStatus, setSelectedStatus] = useState<GameStatus>('all');
 
     useEffect(() => {
-        if (authLoading || !user || !selectedCourt) return;
+        if (authLoading || !user) return;
 
         // Limpieza de juegos antiguos (solo admin)
         if (role === 'admin') {
@@ -80,7 +82,7 @@ export default function JuegosPage() {
         );
 
         gamesUnsubscribe = subscribeToGames(
-            selectedCourt.id,
+            selectedCourt?.id || null,
             {
                 ownerId: role === 'admin' ? null : user.uid,
                 date: new Date() // Load only today's games by default
@@ -100,9 +102,15 @@ export default function JuegosPage() {
             }
         );
 
+        const courtsUnsubscribe = subscribeToCourts(
+            (updatedCourts) => setCourts(updatedCourts),
+            (err) => console.error('Error loading courts:', err)
+        );
+
         return () => {
             if (gamesUnsubscribe) gamesUnsubscribe();
             if (categoriesUnsubscribe) categoriesUnsubscribe();
+            courtsUnsubscribe();
         };
     }, [user, role, selectedCourt, authLoading]);
 
@@ -151,7 +159,15 @@ export default function JuegosPage() {
                 throw new Error('Categoría no encontrada');
             }
 
-            await updateGame(editingGame.id, data, category);
+            const court = courts.find((c) => c.id === data.courtId);
+            if (!court) {
+                throw new Error('Cancha no encontrada');
+            }
+
+            await updateGame(editingGame.id, {
+                ...data,
+                courtName: court.name,
+            }, category);
             await Swal.fire({
                 title: '¡Actualizado!',
                 text: 'El juego se ha actualizado correctamente',
@@ -367,6 +383,7 @@ export default function JuegosPage() {
                     <GameForm
                         game={editingGame || undefined}
                         categories={categories}
+                        courts={courts}
                         onSubmit={handleSubmit}
                         onCancel={handleCancel}
                     />
@@ -479,6 +496,12 @@ export default function JuegosPage() {
                                                                 <>
                                                                     <span className="text-slate-600">•</span>
                                                                     <span className="font-semibold text-slate-200 bg-slate-800 px-2 py-0.5 rounded text-xs">{game.time}</span>
+                                                                </>
+                                                            )}
+                                                            {game.courtName && (
+                                                                <>
+                                                                    <span className="text-slate-600">•</span>
+                                                                    <span className="font-bold text-primary-400">{game.courtName}</span>
                                                                 </>
                                                             )}
                                                         </div>

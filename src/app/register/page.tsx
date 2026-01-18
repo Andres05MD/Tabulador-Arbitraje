@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Swal from 'sweetalert2';
-import { registerSchema, type RegisterFormData } from '@/src/lib/validations';
-import { registerUser } from '@/src/lib/authService';
+import { registerSchema, type RegisterFormData } from '@/lib/validations';
+import { registerUser } from '@/lib/authService';
 
 export default function RegisterPage() {
     const router = useRouter();

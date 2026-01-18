@@ -2,11 +2,13 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
-import { onAuthChange, getUserRole, loginAnonymously } from '@/src/lib/authService';
+import { onAuthChange, getUserRole, loginAnonymously } from '@/lib/authService';
+
+import type { UserRole } from '@/types';
 
 interface AuthContextType {
     user: User | null;
-    role: 'admin' | 'user' | null;
+    role: UserRole | null;
     loading: boolean;
 }
 
@@ -18,7 +20,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [role, setRole] = useState<'admin' | 'user' | null>(null);
+    const [role, setRole] = useState<UserRole | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -37,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             setUser(user);
             if (user.isAnonymous) {
-                setRole('user'); // Usuarios anónimos son 'users'
+                setRole('user'); // Usuarios anónimos son 'users' (o podríamos usar null/guest)
             } else {
                 const userRole = await getUserRole(user.uid);
                 setRole(userRole || 'user');

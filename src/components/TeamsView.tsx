@@ -1,6 +1,6 @@
 'use client';
 
-import type { Game } from '@/src/types';
+import type { Game } from '@/types';
 import PriceDisplay from './PriceDisplay';
 
 interface TeamSummary {
@@ -122,14 +122,19 @@ export default function TeamsView({ games, onEditGame, onDeleteGame, onTogglePay
                                                     {game.status === 'completed' ? 'Completado' : 'Cancelado'}
                                                 </span>
                                             )}
+                                            {game.courtName && (
+                                                <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-blue-950/30 text-blue-400 border border-blue-500/30 rounded-full tracking-wider">
+                                                    {game.courtName}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => onTogglePayment(game, isTeamA ? 'A' : 'B')}
                                                 title={isPaid ? "PAGADO" : "Marcar como PAGADO"}
                                                 className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${isPaid
-                                                        ? 'bg-green-500 text-white shadow-sm'
-                                                        : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                                    ? 'bg-green-500 text-white shadow-sm'
+                                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600'
                                                     }`}
                                             >
                                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

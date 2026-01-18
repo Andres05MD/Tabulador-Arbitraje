@@ -58,39 +58,105 @@ export default function TimePickerField({
         <Popover className="relative w-full">
             {({ open }) => (
                 <>
-                    <Popover.Button
-                        id={id}
-                        disabled={disabled}
-                        className={`
-                            ${className || ''}
-                            w-full flex items-center justify-between
-                            px-4 py-3 rounded-xl transition-all duration-200 outline-none
-                            bg-slate-950/60 border-2 
-                            ${open ? 'border-primary-500 ring-2 ring-primary-500/20' : 'border-slate-600 hover:border-slate-500'}
-                            text-white font-medium
-                            disabled:opacity-50 disabled:cursor-not-allowed
-                        `}
-                    >
-                        <span className={`block truncate ${!value ? 'text-slate-400' : 'text-xl tracking-wider font-bold'}`}>
-                            {value || placeholder}
-                        </span>
-                        <div className="flex items-center gap-2 text-slate-400">
+                    <div className="relative w-full">
+                        <input
+                            id={id}
+                            type="text"
+                            value={value || ''}
+                            maxLength={5}
+                            onChange={(e) => {
+                                let newVal = e.target.value;
+
+                                // Solo permitir números y dos puntos
+                                if (!/^[\d:]*$/.test(newVal)) return;
+
+                                // Limitar longitud máxima a 5 caracteres (HH:MM)
+                                if (newVal.length > 5) return;
+
+                                // Detectar si se está borrando comparando con el valor anterior
+                                const isDeleting = newVal.length < (value || '').length;
+
+                                if (!isDeleting) {
+                                    // Caso 1: Usuario escribe dos dígitos (ej: "12") -> añadir ":" automáticamente si es hora válida
+                                    if (newVal.length === 2 && !newVal.includes(':')) {
+                                        const num = parseInt(newVal);
+                                        if (num >= 0 && num <= 23) {
+                                            newVal += ':';
+                                        } else if (num > 23) {
+                                            // Si es inválido (ej: 25), podemos limitarlo a 2 o dejar que el usuario corrija
+                                            // Por ahora dejamos que escriba pero no auto-formateamos
+                                        }
+                                    }
+                                    // Caso 2: Usuario escribe un dígito > 2 (ej: "3") -> es imposible que sea la primera cifra de una hora de 2 dígitos (excepto 0, 1, 2)
+                                    // Entonces auto-formateamos como "03:"
+                                    if (newVal.length === 1 && parseInt(newVal) > 2) {
+                                        newVal = '0' + newVal + ':';
+                                    }
+                                }
+
+                                // Actualizar el estado si el formato parcial es válido o está vacío
+                                if (newVal === '' || /^[\d:]*$/.test(newVal)) {
+                                    // Si tenemos un formato completo HH:MM, sincronizamos los selectores internos
+                                    if (/^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/.test(newVal)) {
+                                        const [h, m] = newVal.split(':');
+                                        setSelectedHour(h.padStart(2, '0'));
+                                        setSelectedMinute(m.padStart(2, '0'));
+                                    }
+                                    onChange(newVal);
+                                }
+                            }}
+                            onBlur={() => {
+                                // Validate rigid format on blur to prevent saving invalid times
+                                if (value && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+                                    // If invalid, could reset or leave as is but it won't be valid date
+                                    // Let's try to fix simple cases like "9:00" -> "09:00"
+                                    const parts = value.split(':');
+                                    if (parts.length === 2) {
+                                        let h = parts[0].padStart(2, '0');
+                                        let m = parts[1].padStart(2, '0').slice(0, 2);
+                                        if (/^([0-1]?[0-9]|2[0-3])$/.test(h) && /^[0-5][0-9]$/.test(m)) {
+                                            handleTimeChange(h, m);
+                                        }
+                                    }
+                                }
+                            }}
+                            placeholder={placeholder}
+                            disabled={disabled}
+                            className={`
+                                ${className || ''}
+                                w-full px-4 py-3 rounded-xl transition-all duration-200 outline-none
+                                bg-slate-950/60 border-2 
+                                ${open ? 'border-primary-500 ring-2 ring-primary-500/20' : 'border-slate-600 hover:border-slate-500'}
+                                text-white font-bold text-xl tracking-wider placeholder:text-slate-600 font-mono
+                                disabled:opacity-50 disabled:cursor-not-allowed
+                             `}
+                        />
+
+                        {/* Overlay invisible para abrir Popover en click fuera del input si se quiere comportamiento mixto, 
+                            pero Button normal bloquea input. Usamos un div absolute para el icono que togglea. */}
+
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                             {value && !disabled && (
-                                <div
+                                <button
+                                    type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onChange(null);
+                                        setSelectedHour('12');
+                                        setSelectedMinute('00');
                                     }}
-                                    className="p-1 hover:bg-slate-800 rounded-full transition-colors cursor-pointer"
+                                    className="p-1 text-slate-400 hover:bg-slate-800 rounded-full transition-colors"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
-                                </div>
+                                </button>
                             )}
-                            <ClockIcon className={`w-5 h-5 transition-transform duration-200 ${open ? 'text-primary-400' : ''}`} />
+                            <Popover.Button className="p-1 text-slate-400 hover:text-primary-400 focus:outline-none">
+                                <ClockIcon className={`w-6 h-6 transition-transform duration-200 ${open ? 'text-primary-400' : ''}`} />
+                            </Popover.Button>
                         </div>
-                    </Popover.Button>
+                    </div>
 
                     <Transition
                         as={Fragment}

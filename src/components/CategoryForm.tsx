@@ -2,10 +2,10 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { categorySchema, type CategoryFormData } from '@/src/lib/validations';
-import type { Category } from '@/src/types';
+import { categorySchema, type CategoryFormData } from '@/lib/validations';
+import type { Category } from '@/types';
 import PriceDisplay from './PriceDisplay';
-import { useDollarRate } from '@/src/hooks/useDollarRate';
+import { useDollarRate } from '@/hooks/useDollarRate';
 
 interface CategoryFormProps {
     category?: Category;

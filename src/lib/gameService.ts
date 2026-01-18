@@ -14,7 +14,7 @@ import {
     writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Game, Category } from '@/src/types';
+import type { Game, Category } from '@/types';
 
 const COLLECTION_NAME = 'games';
 
@@ -45,7 +45,7 @@ export async function deleteOldGames() {
 // Obtener juegos con filtros (Tiempo real)
 // Si ownerId es null, se asume Admin y se traen todos del court
 export function subscribeToGames(
-    courtId: string,
+    courtId: string | null,
     filters: {
         date?: Date;
         ownerId?: string | null;
@@ -53,15 +53,11 @@ export function subscribeToGames(
     callback: (games: Game[]) => void,
     onError?: (error: any) => void
 ) {
-    if (!courtId) {
-        callback([]);
-        return () => { };
-    }
+    let q = query(collection(db, COLLECTION_NAME));
 
-    let q = query(
-        collection(db, COLLECTION_NAME),
-        where('courtId', '==', courtId)
-    );
+    if (courtId) {
+        q = query(q, where('courtId', '==', courtId));
+    }
 
     // Filtrar por dueño si no es admin (o si se quiere filtrar específico)
     if (filters.ownerId) {
@@ -151,6 +147,8 @@ export async function updateGame(
         date: Date;
         time?: string;
         categoryId: string;
+        courtId: string;
+        courtName: string;
         teamA: string;
         teamB: string;
     },
@@ -164,6 +162,8 @@ export async function updateGame(
         time: data.time || '',
         categoryId: data.categoryId,
         categoryName: category.name,
+        courtId: data.courtId,
+        courtName: data.courtName,
         teamA: data.teamA,
         teamB: data.teamB,
         totalCost,

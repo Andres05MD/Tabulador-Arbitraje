@@ -3,20 +3,23 @@
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
-import type { Category } from '@/src/types';
-import { createGame } from '@/src/lib/gameService';
-import { subscribeToCategories } from '@/src/lib/categoryService';
-import GameForm from '@/src/components/GameForm';
-import FirebasePermissionsError from '@/src/components/FirebasePermissionsError';
-import type { GameFormData } from '@/src/lib/validations';
-import { useAuth } from '@/src/components/AuthProvider';
-import { useCourt } from '@/src/components/CourtProvider';
+import type { Game, Category, Court } from '@/types';
+import { createGame } from '@/lib/gameService';
+import { subscribeToCategories } from '@/lib/categoryService';
+import { subscribeToCourts } from '@/lib/courtService';
+import GameForm from '@/components/GameForm';
+import FirebasePermissionsError from '@/components/FirebasePermissionsError';
+import type { GameFormData } from '@/lib/validations';
+import { useAuth } from '@/components/AuthProvider';
+import { useCourt } from '@/components/CourtProvider';
+import BackButton from '@/components/ui/BackButton';
 
 export default function CargarJuegoPage() {
     const { user } = useAuth();
     const { selectedCourt } = useCourt();
     const router = useRouter();
     const [categories, setCategories] = useState<Category[]>([]);
+    const [courts, setCourts] = useState<Court[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -43,8 +46,16 @@ export default function CargarJuegoPage() {
         return () => unsubscribe();
     }, [user]);
 
+    useEffect(() => {
+        const unsubscribe = subscribeToCourts(
+            (updatedCourts) => setCourts(updatedCourts),
+            (err) => console.error('Error loading courts:', err)
+        );
+        return () => unsubscribe();
+    }, []);
+
     const handleSubmit = async (data: GameFormData) => {
-        if (!user || !selectedCourt) return;
+        if (!user) return;
 
         if (categories.length === 0) {
             Swal.fire({
@@ -63,11 +74,13 @@ export default function CargarJuegoPage() {
                 throw new Error('Categoría no encontrada');
             }
 
+            const court = courts.find((c) => c.id === data.courtId);
+
             await createGame({
                 ...data,
                 ownerId: user.uid,
-                courtId: selectedCourt.id,
-                courtName: selectedCourt.name,
+                courtId: data.courtId,
+                courtName: court?.name || 'Cancha desconocida',
             }, category);
 
             await Swal.fire({
@@ -123,10 +136,14 @@ export default function CargarJuegoPage() {
 
     return (
         <div className="page-container">
-            <h1 className="page-title">Registrar Nuevo Juego</h1>
+            <div className="flex flex-row justify-between items-center mb-6 gap-4">
+                <h1 className="page-title mb-0">Registrar Juego</h1>
+                <BackButton href="/juegos" className="md:order-last md:self-auto !mb-0" />
+            </div>
             <div className="glass-card p-6 animate-scale-in">
                 <GameForm
                     categories={categories}
+                    courts={courts}
                     onSubmit={handleSubmit}
                     onCancel={handleCancel}
                 />
